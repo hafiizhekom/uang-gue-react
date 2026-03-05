@@ -1,0 +1,6 @@
+@import "tailwindcss";
+
+/* Kalau mau font kustom, bisa tambah di sini nanti */
+body {
+  @apply bg-slate-50 text-slate-900 antialiased;
+}
