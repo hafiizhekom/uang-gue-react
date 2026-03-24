@@ -35,7 +35,7 @@ export default function Sidebar() {
   return (
     <aside className="w-64 bg-slate-900 text-white hidden md:flex flex-col shrink-0 min-h-screen border-r border-slate-800 sticky top-0">
       <div className="p-8 text-2xl font-black border-b border-slate-800 tracking-tighter italic">
-        Uang<span className="text-emerald-400">Ku</span>
+        Uang<span className="text-emerald-400">Gue</span>
       </div>
       
       <nav className="flex-1 p-4 mt-4 overflow-y-auto no-scrollbar">

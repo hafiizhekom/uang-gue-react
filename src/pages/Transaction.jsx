@@ -49,8 +49,27 @@ export default function Transaction() {
 
     const formatDateFull = (dateString) => {
         if (!dateString) return "-";
-        const date = new Date(dateString);
-        return new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+        
+        // Pecah string (asumsi format dd-mm-yyyy atau dd/mm/yyyy)
+        const parts = dateString.split(/[-/]/);
+        
+        let date;
+        if (parts.length === 3 && parts[2].length === 4) {
+            // Susun ulang jadi yyyy-mm-dd agar aman dibaca constructor Date
+            date = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+        } else {
+            // Fallback jika format sudah standar ISO
+            date = new Date(dateString);
+        }
+
+        // Cek apakah hasil parsing valid
+        if (isNaN(date.getTime())) return dateString;
+
+        return new Intl.DateTimeFormat('id-ID', { 
+            day: 'numeric', 
+            month: 'long', 
+            year: 'numeric' 
+        }).format(date);
     };
 
     const formatNumberInput = (val) => {
