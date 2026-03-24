@@ -63,7 +63,7 @@ export default function MasterPeriod() {
           onClick={() => openModal('add')}
           className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold transition shadow-lg shadow-emerald-600/20 disabled:opacity-50"
         >
-          {loading ? 'Synchronizing data...' : '+ New Period'}
+          {loading ? 'Loading data...' : '+ New Period'}
         </button>
       </header>
 
@@ -80,7 +80,7 @@ export default function MasterPeriod() {
           </thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
-              <tr><td colSpan="5" className="p-16 text-center text-slate-400 animate-pulse font-medium italic">Synchronizing data...</td></tr>
+              <tr><td colSpan="5" className="p-16 text-center text-slate-400 animate-pulse font-medium italic">Loading data...</td></tr>
             ) : data.length === 0 ? (
               <tr><td colSpan="5" className="p-16 text-center text-slate-400">No data available.</td></tr>
             ) : data.map((item) => (

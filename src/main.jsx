@@ -3,9 +3,11 @@ import { createRoot } from 'react-dom/client'
 import axios from 'axios'
 import './index.css'
 import App from './App.jsx'
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
-// Ambil URL dari .env
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+// 1. Axios Configuration
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+axios.defaults.headers.common['Accept'] = 'application/json'; // Biar Laravel selalu balas JSON
 
 axios.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -15,9 +17,18 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
-// 2. Render Aplikasi
+// 2. Client ID Check
+const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+if (!clientId) {
+  console.warn("Google Client ID is missing. Check your .env file!");
+}
+
+// 3. Render Aplikasi
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
+      <App />
+    </GoogleOAuthProvider>
   </StrictMode>,
 )

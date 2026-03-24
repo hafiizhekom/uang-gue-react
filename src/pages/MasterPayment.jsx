@@ -66,11 +66,10 @@ export default function Wallet() {
         setSubmitting(true);
         const rawBalance = Number(formData.balance.toString().replace(/\D/g, ''));
         
-        // Buat payload, slug hanya dikirim jika Create atau sesuai kebutuhan API
         const payload = { 
             name: formData.name, 
             balance: rawBalance,
-            ...( !isEdit && { slug: formData.slug } ) // Slug cuma dikirim pas Create
+            ...( !isEdit && { slug: formData.slug } ) 
         };
 
         try {
@@ -116,7 +115,6 @@ export default function Wallet() {
                     <p className="text-slate-500 text-sm">Manage wallets/master payments</p>
                 </div>
                 <div className="flex items-center gap-6">
-                    {/* Info Total Saldo dibikin subtle di sebelah tombol */}
                     <div className="text-right hidden sm:block">
                         <p className="text-[10px] font-black uppercase text-slate-400 tracking-widest leading-none">Total Balance</p>
                         <p className="text-xl font-bold text-emerald-600 tracking-tight">
@@ -125,7 +123,8 @@ export default function Wallet() {
                     </div>
                 </div>
             </header>
-            {/* ACTION BAR - SEKARANG MEPEK KANAN TANPA CARD */}
+
+            {/* ACTION BAR */}
             <div className="flex justify-end pt-2">
                 <button 
                     onClick={() => handleOpenModal()} 
@@ -141,7 +140,7 @@ export default function Wallet() {
             {/* LIST AREA */}
             <div className="space-y-2">
                 <div className="flex px-8 text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                    <div className="flex-1">Account</div>
+                    <div className="flex-1">Account & Usage</div>
                     <div className="w-40 text-right">Balance</div>
                     <div className="w-32 text-right">Actions</div>
                 </div>
@@ -152,9 +151,16 @@ export default function Wallet() {
                             <div className="w-10 h-10 bg-slate-100 text-slate-400 rounded-xl flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-colors font-black text-xs">
                                 {wallet.name.substring(0, 2).toUpperCase()}
                             </div>
-                            <div>
+                            <div className="space-y-1">
                                 <h4 className="font-black text-slate-800 leading-tight">{wallet.name}</h4>
-                                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">{wallet.slug}</p>
+                                <div className="flex items-center gap-3">
+                                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.1em]">{wallet.slug}</p>
+                                    <div className="flex gap-2 border-l border-slate-100 pl-3">
+                                        <span className="text-[9px] font-bold text-emerald-500 uppercase">In: {wallet.count_incomes || 0}</span>
+                                        <span className="text-[9px] font-bold text-rose-400 uppercase">Out: {wallet.count_outcomes || 0}</span>
+                                        <span className="text-[9px] font-bold text-amber-500 uppercase">Det: {wallet.count_outcome_details || 0}</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         <div className="w-40 text-right">
@@ -185,7 +191,6 @@ export default function Wallet() {
                                         setFormData({
                                             ...formData, 
                                             name: val, 
-                                            // Slug auto-update cuma jalan pas Create
                                             ...(!isEdit && { slug: val.toLowerCase().replace(/ /g, '-') })
                                         });
                                     }} 
@@ -193,7 +198,6 @@ export default function Wallet() {
                                 />
                             </div>
 
-                            {/* SLUG CUMA MUNCUL PAS CREATE */}
                             {!isEdit && (
                                 <div className="space-y-1 animate-in slide-in-from-top-2 duration-300">
                                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Slug (Identifier)</label>
@@ -222,7 +226,7 @@ export default function Wallet() {
                 </div>
             )}
 
-            {/* DELETE MODAL (Tetap sama) */}
+            {/* DELETE MODAL */}
             {showDeleteModal && (
                 <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
                     <div className="bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden shadow-2xl text-center">
