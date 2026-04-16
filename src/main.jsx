@@ -17,6 +17,20 @@ axios.interceptors.request.use((config) => {
   return config;
 });
 
+axios.interceptors.response.use(
+  (response) => response, 
+  (error) => {
+    // Jika status 401 (Expired atau Invalid Token)
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 // 2. Client ID Check
 const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
