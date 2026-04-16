@@ -29,28 +29,46 @@ export default function PeriodList() {
     return (
         <div className="p-8 max-w-2xl mx-auto space-y-10 min-h-screen bg-slate-50">
             <header>
-                <h2 className="text-4xl font-black tracking-tighter text-slate-900">Select Period</h2>
+                <h2 className="text-4xl font-black tracking-tighter text-slate-900 leading-none">Select Period</h2>
                 <p className="text-slate-500 font-medium">Choose a period to manage transactions</p>
             </header>
 
             <div className="grid gap-4">
-                {periods.map(p => (
-                    <button 
-                        key={p.id} 
-                        onClick={() => navigate(`/transactions/${p.id}`)}
-                        className="group flex justify-between items-center p-6 bg-white rounded-[2rem] border-2 border-transparent hover:border-slate-900 hover:shadow-xl transition-all text-left"
-                    >
-                        <div>
-                            <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Fiscal Period</p>
-                            <p className="font-bold text-xl text-slate-800 group-hover:text-slate-900">{p.name}</p>
+                {periods.length > 0 ? (
+                    periods.map(p => (
+                        <button 
+                            key={p.id} 
+                            onClick={() => navigate(`/transactions/${p.id}`)}
+                            className="group flex justify-between items-center p-6 bg-white rounded-[2rem] border-2 border-transparent hover:border-slate-900 hover:shadow-xl transition-all text-left"
+                        >
+                            <div>
+                                <p className="text-[10px] font-black uppercase text-slate-400 mb-1">Fiscal Period</p>
+                                <p className="font-bold text-xl text-slate-800 group-hover:text-slate-900">{p.name}</p>
+                            </div>
+                            <div className="bg-slate-100 p-3 rounded-full group-hover:bg-slate-900 group-hover:text-white transition-colors">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
+                                </svg>
+                            </div>
+                        </button>
+                    ))
+                ) : (
+                    /* --- EMPTY STATE (Style disesuaikan dengan tombol di atas) --- */
+                    <div className="p-12 bg-white rounded-[2rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-center space-y-6">
+                        <div className="space-y-2">
+                            <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">No Periods Found</h3>
+                            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest leading-relaxed">
+                                Silakan buat master periode terlebih dahulu.
+                            </p>
                         </div>
-                        <div className="bg-slate-100 p-3 rounded-full group-hover:bg-slate-900 group-hover:text-white transition-colors">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M9 5l7 7-7 7" />
-                            </svg>
-                        </div>
-                    </button>
-                ))}
+                        <button 
+                            onClick={() => navigate('/master-period')} 
+                            className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black uppercase text-[10px] tracking-widest hover:bg-emerald-500 transition-all shadow-xl active:scale-95"
+                        >
+                            Create Master Period
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );
