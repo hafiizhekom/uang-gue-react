@@ -35,20 +35,18 @@ export default function Login() {
         {/* LOGO AREA */}
         <div className="text-center space-y-2">
           <div className="w-20 h-20 bg-emerald-500 rounded-[2rem] mx-auto flex items-center justify-center shadow-lg shadow-emerald-500/30 mb-6">
-            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.546 1.16 3.743 1.16 5.289 0m-5.289-8.802l.879.659c1.546 1.16 3.743 1.16 5.289 0m-5.289 8.802c-1.115-.836-1.607-1.791-1.607-2.822 0-3.417 4.854-4.688 4.854-7.474 0-1.426-.794-2.456-2.108-3.25" />
-            </svg>
+            <img src="/logo.webp" alt="UangGue Logo" />
           </div>
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">
             Uang<span className="text-emerald-500">Gue</span>
           </h1>
-          <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">Personal Finance</p>
+          <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">Personal Financial Tracker</p>
         </div>
 
         {/* INSTRUCTION */}
         <div className="text-center">
           <p className="text-slate-600 font-bold text-sm leading-relaxed">
-            Selamat datang kembali.<br /> Silahkan masuk dengan akun Google Anda.
+            Silahkan masuk dengan akun Google Anda.
           </p>
         </div>
 
@@ -78,7 +76,7 @@ export default function Login() {
         {/* FOOTER */}
         <div className="text-center pt-4">
           <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest">
-            &copy; 2026 UangGue System
+            &copy; 2026 UangGue
           </p>
         </div>
       </div>
