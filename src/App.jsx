@@ -1,5 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/useAuthStore';
+import { Analytics } from "@vercel/analytics/react"
+import { SpeedInsights } from "@vercel/speed-insights/react"
 import Sidebar from './components/layout/Sidebar';
 import Header from './components/layout/Header';
 import Dashboard from './pages/Dashboard';
@@ -59,6 +61,8 @@ export default function App() {
           </div>
         ) : <Navigate to="/login" />} />
       </Routes>
+      <Analytics/>
+      <SpeedInsights/>
     </Router>
   );
 }
