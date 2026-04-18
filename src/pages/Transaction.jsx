@@ -80,7 +80,7 @@ export default function Transaction() {
 
     // --- CALCULATIONS ---
     const totalInc = useMemo(() => incomes.reduce((s, i) => s + (Number(i?.amount) || 0), 0), [incomes]);
-    const totalOut = useMemo(() => outcomes.reduce((s, i) => s + (Number(i?.total_amount) || 0), 0), [outcomes]);
+    const totalOut = useMemo(() => outcomes.reduce((s, i) => s + (Number(i?.amount) || 0), 0), [outcomes]);
     
     const balance = useMemo(() => totalInc - totalOut, [totalInc, totalOut]);
     const isSurplus = balance >= 0;
@@ -134,8 +134,8 @@ export default function Transaction() {
             master_payment_id: data.payment?.id || data.master_payment_id || '',
             master_outcome_type_id: data.type?.id || data.master_outcome_type_id || '',
             title: data.title || '',
-            amount: String(data.total_amount || data.amount || ''),
-            date: data.date ? data.date.split('T')[0] : "",
+            amount: String(data.amount || data.amount || ''),
+            date: data.date ? data.date.split('-').reverse().join('-') : "",
             has_detail: data.has_detail || false,
         } : {
             master_period_id: periodId,
@@ -159,11 +159,11 @@ export default function Transaction() {
         const payload = {
             master_period_id: Number(periodId),
             title: formData.title,
-            amount: rawAmount,
             date: formData.date,
         };
 
         if (!formData.has_detail) {
+            payload.amount = rawAmount;
             payload.master_payment_id = Number(formData.master_payment_id);
         }
 
@@ -234,6 +234,65 @@ export default function Transaction() {
         </div>
     );
 
+    const [incSort, setIncSort] = useState({ key: 'date', direction: 'desc' });
+    const [outSort, setOutSort] = useState({ key: 'date', direction: 'desc' });
+    const sortedData = (data, config) => { // Tambah parameter config
+        const sortableData = [...data];
+        if (config.key !== null) {
+            sortableData.sort((a, b) => {
+                const getValue = (obj, path) => {
+                    if (!path) return '';
+                    return path.split('.').reduce((acc, part) => {
+                        if (acc && typeof acc === 'object' && acc[part] !== undefined && acc[part] !== null) {
+                            return acc[part];
+                        }
+                        return '';
+                    }, obj);
+                };
+
+                let aValue = getValue(a, config.key);
+                let bValue = getValue(b, config.key);
+
+                if (config.key === 'date') {
+                    const [ad, am, ay] = String(aValue).split('-');
+                    const [bd, bm, by] = String(bValue).split('-');
+                    aValue = new Date(`${ay}-${am}-${ad}`).getTime() || 0;
+                    bValue = new Date(`${by}-${bm}-${bd}`).getTime() || 0;
+                } 
+                else if (config.key.includes('amount')) {
+                    aValue = Number(aValue) || 0;
+                    bValue = Number(bValue) || 0;
+                } 
+                else {
+                    aValue = String(aValue).toLowerCase();
+                    bValue = String(bValue).toLowerCase();
+                }
+
+                if (aValue < bValue) return config.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return config.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        return sortableData;
+    };
+
+    const sortedIncomes = useMemo(() => sortedData(incomes, incSort), [incomes, incSort]);
+    const sortedOutcomes = useMemo(() => sortedData(outcomes, outSort), [outcomes, outSort]);
+
+    const requestSortInc = (key) => {
+        setIncSort(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const requestSortOut = (key) => {
+        setOutSort(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
     if (loading) return <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 text-slate-400 font-black uppercase text-[10px] tracking-[0.3em]"><div className="w-10 h-10 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin mb-4"></div>Loading...</div>;
 
     return (
@@ -269,15 +328,23 @@ export default function Transaction() {
                         <table className="w-full text-left font-bold">
                             <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                                 <tr>
-                                    <th className="py-3 px-8">Date</th>
-                                    <th className="py-3 px-8">Info</th>
-                                    <th className="py-3 px-8 text-center">Payment</th>
-                                    <th className="py-3 px-8 text-right">Amount</th>
+                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('date')}>
+                                        Date {incSort.key === 'date' && (incSort.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('title')}>
+                                        Info {incSort.key === 'title' && (incSort.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="py-3 px-8 text-center cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('payment.name')}>
+                                        Payment {incSort.key === 'payment.name' && (incSort.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="py-3 px-8 text-right cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('amount')}>
+                                        Total {incSort.key === 'amount' && (incSort.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
                                     <th className="py-3 px-8 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {incomes.map(inc => (
+                                {sortedIncomes.map(inc => (
                                     <tr key={inc.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="py-3 px-8 text-[11px] text-slate-400">{formatDateFull(inc.date)}</td>
                                         <td className="py-3 px-8">
@@ -312,16 +379,26 @@ export default function Transaction() {
                         <table className="w-full text-left font-bold">
                             <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                                 <tr>
-                                    <th className="py-3 px-8">Date</th>
-                                    <th className="py-3 px-8">Info</th>
-                                    <th className="py-3 px-8">Category</th>
-                                    <th className="py-3 px-8 text-center">Payment</th>
-                                    <th className="py-3 px-8 text-right">Total</th>
+                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('date')}>
+                                        Date {outSort.key === 'date' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('title')}>
+                                        Info {outSort.key === 'title' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('category.name')}>
+                                        Category {outSort.key === 'category.name' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="py-3 px-8 text-center cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('payment.name')}>
+                                        Payment {outSort.key === 'payment.name' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
+                                    <th className="py-3 px-8 text-right cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('amount')}>
+                                        Total {outSort.key === 'amount' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                    </th>
                                     <th className="py-3 px-8 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {outcomes.map(out => (
+                                {sortedOutcomes.map(out => (
                                     <tr key={out.id} className="hover:bg-slate-50/50 transition-colors">
                                         <td className="py-3 px-8 text-[11px] text-slate-400">{formatDateFull(out.date)}</td>
                                         <td className="py-3 px-8">
@@ -338,7 +415,7 @@ export default function Transaction() {
                                         <td className="py-3 px-8 text-center">
                                             <span className="text-[10px] border border-slate-200 px-3 py-1 rounded-full uppercase text-slate-500">{out.payment?.name || '-'}</span>
                                         </td>
-                                        <td className="py-3 px-8 text-right text-rose-600">{formatIDR(out.total_amount)}</td>
+                                        <td className="py-3 px-8 text-right text-rose-600">{formatIDR(out.amount)}</td>
                                         <td className="py-3 px-8 text-right">
                                             <div className="flex justify-end gap-3 items-center">
                                                 {out.has_detail && <button onClick={() => navigate(`/outcome-detail/${out.id}`)} className="bg-slate-900 text-white text-[9px] font-black px-3 py-1.5 rounded-lg">DETAIL</button>}
@@ -367,15 +444,18 @@ export default function Transaction() {
                                 <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Title</label>
                                 <input required type="text" value={formData.title} onChange={(e) => setFormData({...formData, title: e.target.value})} className="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-700 text-sm" />
                             </div>
+
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Amount</label>
-                                    <div className="relative">
-                                        <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xs">Rp</span>
-                                        <input required type="text" value={formatNumberInput(formData.amount)} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(/\D/g, '')})} className="w-full p-4 pl-10 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-700 text-sm" />
+                                {!formData.has_detail && (
+                                    <div className="space-y-1">
+                                        <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Amount</label>
+                                        <div className="relative">
+                                            <span className="absolute left-4 top-1/2 -translate-y-1/2 font-black text-slate-400 text-xs">Rp</span>
+                                            <input required type="text" value={formatNumberInput(formData.amount)} onChange={(e) => setFormData({...formData, amount: e.target.value.replace(/\D/g, '')})} className="w-full p-4 pl-10 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-700 text-sm" />
+                                        </div>
                                     </div>
-                                </div>
-                                <div className="space-y-1">
+                                )}
+                                <div className={`space-y-1 transition-all duration-300 ${formData.has_detail ? 'col-span-2' : ''}`}>
                                     <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Date</label>
                                     <input required type="date" min={dateLimits.min} max={dateLimits.max} value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full p-4 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-700 text-sm" />
                                 </div>
