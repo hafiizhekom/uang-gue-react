@@ -1,9 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useLocation, useParams, useNavigate } from 'react-router-dom';
 
 export default function OutcomeDetail() {
     const { outcomeId } = useParams();
+    const location = useLocation();
+
     const navigate = useNavigate();
     
     const [originalDetails, setOriginalDetails] = useState([]); // Master data dari DB
@@ -12,6 +14,8 @@ export default function OutcomeDetail() {
     const [masterTags, setMasterTags] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'asc' });
+    const outcomeTitle = location.state?.outcomeTitle || "";
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -45,7 +49,9 @@ export default function OutcomeDetail() {
 
     // --- UI HANDLERS ---
     const handleAddRow = () => {
-        setDetails([...details, {
+        setSortConfig({ key: null, direction: 'asc' });
+        
+        setDetails([{
             id: `temp-${Date.now()}`,
             title: '',
             amount: 0,
@@ -54,7 +60,8 @@ export default function OutcomeDetail() {
             date: new Date().toISOString().split('T')[0],
             tags: [],
             isNew: true
-        }]);
+        },
+        ...details]);
     };
 
     const handleInputChange = (id, field, value) => {
@@ -135,6 +142,57 @@ export default function OutcomeDetail() {
         }
     };
 
+    const sortedDetails = useMemo(() => {
+        let sortableDetails = [...details];
+        if (sortConfig.key !== null) {
+            sortableDetails.sort((a, b) => {
+                let aValue, bValue;
+
+                switch (sortConfig.key) {
+                    case 'payment':
+                        // Nyari nama payment berdasarkan ID yang ada di baris
+                        aValue = masterPayments.find(p => String(p.id) === String(a.master_payment_id))?.name || '';
+                        bValue = masterPayments.find(p => String(p.id) === String(b.master_payment_id))?.name || '';
+                        break;
+                    case 'amount':
+                        // Pastiin beneran angka
+                        aValue = Number(a.amount) || 0;
+                        bValue = Number(b.amount) || 0;
+                        break;
+                    case 'tags':
+                        // Sortir berdasarkan jumlah tag yang dipilih
+                        aValue = a.tags?.length || 0;
+                        bValue = b.tags?.length || 0;
+                        break;
+                    default:
+                        // Untuk date, title, dan note
+                        aValue = (a[sortConfig.key] || '').toString().toLowerCase();
+                        bValue = (b[sortConfig.key] || '').toString().toLowerCase();
+                }
+
+                if (aValue < bValue) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aValue > bValue) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        return sortableDetails;
+    }, [details, sortConfig, masterPayments]);
+
+    const requestSort = (key) => {
+        setSortConfig(prev => ({
+            key,
+            direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
+        }));
+    };
+
+    const formatNumberInput = (val) => {
+        if (val === undefined || val === null || val === '') return '';
+        // Hilangkan semua karakter non-digit
+        const num = val.toString().replace(/\D/g, '');
+        // Format ke IDR tanpa simbol Rp (karena nanti simbolnya di luar input biar rapi)
+        return new Intl.NumberFormat('id-ID').format(num);
+    };
+
     const totalAmount = useMemo(() => details.reduce((acc, curr) => acc + Number(curr.amount || 0), 0), [details]);
 
     if (loading) return <div className="flex items-center justify-center min-h-screen font-black text-slate-400 uppercase tracking-widest text-[10px]">Syncing...</div>;
@@ -143,7 +201,7 @@ export default function OutcomeDetail() {
         <div className="p-8 space-y-8 min-h-screen bg-slate-50 text-slate-800">
             <header className="flex justify-between items-end">
                 <div>
-                    <h2 className="text-4xl font-black tracking-tighter text-slate-900 leading-none">OUTCOME BATCH EDIT</h2>
+                    <h2 className="text-4xl font-black tracking-tighter text-slate-900 leading-none">Outcome Detail {outcomeTitle}</h2>
                     <p className="text-rose-500 font-bold uppercase text-[10px] tracking-widest mt-2">REF: #{outcomeId}</p>
                 </div>
                 <div className="flex gap-3">
@@ -160,17 +218,59 @@ export default function OutcomeDetail() {
                     <table className="w-full text-left border-separate border-spacing-0">
                         <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
                             <tr>
-                                <th className="p-4 border-r border-slate-100">Date</th>
-                                <th className="p-4 border-r border-slate-100 w-1/4">Title</th>
-                                <th className="p-4 border-r border-slate-100 text-right">Amount</th>
-                                <th className="p-4 border-r border-slate-100">Payment</th>
-                                <th className="p-4 border-r border-slate-100">Tags</th>
-                                <th className="p-4 border-r border-slate-100">Note</th>
+                                {/* Kolom Date */}
+                                <th className="p-4 border-r border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('date')}>
+                                    <div className="flex items-center justify-between">
+                                        <span>Date</span>
+                                        {sortConfig.key === 'date' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </div>
+                                </th>
+
+                                {/* Kolom Title */}
+                                <th className="p-4 border-r border-slate-100 w-1/4 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('title')}>
+                                    <div className="flex items-center justify-between">
+                                        <span>Title</span>
+                                        {sortConfig.key === 'title' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </div>
+                                </th>
+
+                                {/* Kolom Amount */}
+                                <th className="p-4 border-r border-slate-100 text-right cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('amount')}>
+                                    <div className="flex items-center justify-between justify-end gap-2">
+                                        <span>Amount</span>
+                                        {sortConfig.key === 'amount' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </div>
+                                </th>
+
+                                {/* Kolom Payment */}
+                                <th className="p-4 border-r border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('payment')}>
+                                    <div className="flex items-center justify-between">
+                                        <span>Payment</span>
+                                        {sortConfig.key === 'payment' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </div>
+                                </th>
+
+                                {/* Kolom Tags */}
+                                <th className="p-4 border-r border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('tags')}>
+                                    <div className="flex items-center justify-between">
+                                        <span>Tags</span>
+                                        {sortConfig.key === 'tags' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </div>
+                                </th>
+
+                                {/* Kolom Note */}
+                                <th className="p-4 border-r border-slate-100 cursor-pointer hover:bg-slate-100 transition-colors" onClick={() => requestSort('note')}>
+                                    <div className="flex items-center justify-between">
+                                        <span>Note</span>
+                                        {sortConfig.key === 'note' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                                    </div>
+                                </th>
+
                                 <th className="p-4 text-center">Del</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {details.map((row) => (
+                            {sortedDetails.map((row) => (
                                 <tr key={row.id} className={`${row.isNew ? 'bg-amber-50/20' : ''} hover:bg-slate-50/50 transition-colors`}>
                                     <td className="p-0 border-r border-slate-100">
                                         <input type="date" value={row.date} onChange={(e) => handleInputChange(row.id, 'date', e.target.value)} className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-600 p-3" />
@@ -179,7 +279,16 @@ export default function OutcomeDetail() {
                                         <input type="text" value={row.title} onChange={(e) => handleInputChange(row.id, 'title', e.target.value)} className="w-full bg-transparent border-none focus:ring-2 focus:ring-inset focus:ring-slate-900 text-sm font-bold text-slate-700 p-3" />
                                     </td>
                                     <td className="p-0 border-r border-slate-100">
-                                        <input type="number" value={row.amount} onChange={(e) => handleInputChange(row.id, 'amount', e.target.value)} className="w-full bg-transparent border-none focus:ring-0 text-sm font-black text-rose-600 p-3 text-right" />
+                                        <input type="text" 
+                                        value={row.amount} 
+                                        onChange={(e) => handleInputChange(row.id, 'amount', e.target.value)}
+                                        value={formatNumberInput(row.amount)} 
+                                        onChange={(e) => {
+                                            const rawValue = e.target.value.replace(/\D/g, '');
+                                            
+                                            handleInputChange(row.id, 'amount', rawValue);
+                                        }} 
+                                        className="w-full bg-transparent border-none focus:ring-0 text-sm font-black text-rose-600 p-3 text-right" />
                                     </td>
                                     <td className="p-0 border-r border-slate-100">
                                         <select value={row.master_payment_id} onChange={(e) => handleInputChange(row.id, 'master_payment_id', e.target.value)} className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-black uppercase text-slate-500 p-3">

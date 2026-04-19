@@ -418,7 +418,11 @@ export default function Transaction() {
                                         <td className="py-3 px-8 text-right text-rose-600">{formatIDR(out.amount)}</td>
                                         <td className="py-3 px-8 text-right">
                                             <div className="flex justify-end gap-3 items-center">
-                                                {out.has_detail && <button onClick={() => navigate(`/outcome-detail/${out.id}`)} className="bg-slate-900 text-white text-[9px] font-black px-3 py-1.5 rounded-lg">DETAIL</button>}
+                                                {out.has_detail && <button 
+                                                onClick={() => navigate(`/outcome-detail/${out.id}`, { 
+                                                    state: { outcomeTitle: out.title }
+                                                })}
+                                                className="bg-slate-900 text-white text-[9px] font-black px-3 py-1.5 rounded-lg">DETAIL</button>}
                                                 <button onClick={() => handleOpenModal('outcome', out)} className="text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase">Edit</button>
                                                 <button onClick={() => { setDeleteTarget({ type: 'outcome', id: out.id }); setShowDeleteModal(true); }} className="text-rose-300 hover:text-rose-600 font-black text-[10px] uppercase">Del</button>
                                             </div>
