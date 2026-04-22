@@ -176,7 +176,12 @@ function StatCard({ title, value, color, isDark = false }) {
 }
 
 function DonutCard({ title, data, colors, formatIDR }) {
-  const total = useMemo(() => data.reduce((s, i) => s + i.total, 0), [data]);
+  // Kita urutkan data dari yang TERBESAR ke TERKECIL berdasarkan field 'total'
+  const sortedData = useMemo(() => {
+    return [...data].sort((a, b) => b.total - a.total);
+  }, [data]);
+
+  const total = useMemo(() => sortedData.reduce((s, i) => s + i.total, 0), [sortedData]);
 
   return (
     <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col items-center space-y-4">
@@ -184,8 +189,9 @@ function DonutCard({ title, data, colors, formatIDR }) {
       <div className="h-[200px] w-full relative">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
-            <Pie data={data} innerRadius={65} outerRadius={85} paddingAngle={8} dataKey="total" stroke="none">
-              {data.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
+            {/* Pakai sortedData di sini */}
+            <Pie data={sortedData} innerRadius={65} outerRadius={85} paddingAngle={8} dataKey="total" stroke="none">
+              {sortedData.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
             </Pie>
             <Tooltip />
           </PieChart>
@@ -195,8 +201,9 @@ function DonutCard({ title, data, colors, formatIDR }) {
             <p className="text-sm font-black text-slate-800 tracking-tighter">{Number(total).toLocaleString('id-ID')}</p>
         </div>
       </div>
-      <div className="w-full space-y-2 max-h-[120px] overflow-y-auto pr-2 custom-scrollbar">
-        {data.map((item, idx) => (
+      <div className="w-full space-y-2 overflow-y-auto pr-2 custom-scrollbar">
+        {/* Dan pakai sortedData juga di list legend-nya */}
+        {sortedData.map((item, idx) => (
             <div key={idx} className="flex justify-between items-center text-[10px] font-bold">
                 <span className="text-slate-400 flex items-center gap-2 truncate">
                     <span className="w-2 h-2 rounded-full flex-shrink-0" style={{backgroundColor: colors[idx % colors.length]}}></span>
