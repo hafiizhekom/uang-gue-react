@@ -106,11 +106,16 @@ export default function Dashboard() {
       </header>
 
       {/* STATS CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <StatCard title="Wallet Balance" value={stats.total_wallet_amount} color="text-slate-900" isDark />
         <StatCard title="Income" value={stats.monthly_income} color="text-emerald-500" />
         <StatCard title="Outcome" value={stats.monthly_outcome} color="text-rose-500" />
         <StatCard title="Net Savings" value={stats.net_savings} color="text-indigo-500" />
+        <StatCard 
+          title="Unaccounted Diff" 
+          value={Math.abs(stats.total_wallet_amount - stats.net_savings)} 
+          color={stats.total_wallet_amount - stats.net_savings >= 0 ? "text-emerald-500" : "text-rose-500"} 
+        />
       </div>
 
       {/* TREND CHART - REDESIGNED */}
