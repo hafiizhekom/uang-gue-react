@@ -84,59 +84,121 @@ export default function OutcomeDetail() {
 
     // --- BATCH SAVE LOGIC ---
     const handleSaveAll = async () => {
+        if (submitting) return;
         setSubmitting(true);
-        
-        // 1. Identifikasi baris baru (POST)
+
         const toCreate = details.filter(d => d.isNew && d.title);
-        
-        // 2. Identifikasi baris lama yang berubah (PUT)
         const toUpdate = details.filter(d => {
             if (d.isNew) return false;
             const old = originalDetails.find(o => o.id === d.id);
             return JSON.stringify(old) !== JSON.stringify(d);
         });
-
-        // 3. Identifikasi baris yang dihapus (DELETE)
         const toDelete = originalDetails.filter(o => !details.find(d => d.id === o.id));
 
+        const tasks = [
+            ...toDelete.map(item => ({
+                type: 'DELETE',
+                id: item.id,
+                promise: axios.delete(`/outcome-details/${item.id}`).then(() => ({ id: item.id, type: 'DELETE' }))
+            })),
+            ...toUpdate.map(item => ({
+                type: 'UPDATE',
+                id: item.id,
+                promise: axios.put(`/outcome-details/${item.id}`, {
+                    outcome_id: Number(outcomeId),
+                    master_payment_id: Number(item.master_payment_id),
+                    title: item.title,
+                    amount: Number(item.amount),
+                    date: item.date,
+                    note: item.note,
+                    tags: item.tags
+                }).then(() => ({ id: item.id, type: 'UPDATE', data: item }))
+            })),
+            ...toCreate.map(item => ({
+                type: 'CREATE',
+                id: item.id, // temp-id
+                promise: axios.post('/outcome-details', {
+                    outcome_id: Number(outcomeId),
+                    master_payment_id: Number(item.master_payment_id),
+                    title: item.title,
+                    amount: Number(item.amount),
+                    date: item.date,
+                    note: item.note,
+                    tags: item.tags
+                }).then((res) => ({ 
+                    id: item.id, 
+                    type: 'CREATE', 
+                    newId: res.data.data.id, // Ambil ID asli doang
+                    data: item // Pake data yang diinput user tadi
+                }))
+            }))
+        ];
+
+        if (tasks.length === 0) {
+            alert("No changes detected.");
+            setSubmitting(false);
+            return;
+        }
+
         try {
-            const promises = [];
+            const results = await Promise.allSettled(tasks.map(t => t.promise));
+            
+            let newDetails = [...details];
+            let newOriginals = [...originalDetails];
+            let errorMessages = [];
 
-            // Execute Deletes
-            toDelete.forEach(item => promises.push(axios.delete(`/outcome-details/${item.id}`)));
+            results.forEach((result, index) => {
+                
+                const task = tasks[index];
 
-            // Execute Updates
-            toUpdate.forEach(item => {
-                promises.push(axios.put(`/outcome-details/${item.id}`, {
-                    outcome_id: Number(outcomeId),
-                    master_payment_id: Number(item.master_payment_id),
-                    title: item.title,
-                    amount: Number(item.amount),
-                    date: item.date,
-                    note: item.note,
-                    tags: item.tags
-                }));
+                const currentItem = details.find(d => d.id === task.id) || originalDetails.find(o => o.id === task.id);
+                const displayTitle = currentItem?.title || "Untitled Item";
+                if (result.status === 'fulfilled') {
+                    const info = result.value;
+                    if (info.type === 'DELETE') {
+                        newOriginals = newOriginals.filter(o => o.id !== info.id);
+                    } 
+                    else if (info.type === 'UPDATE') {
+                        newOriginals = newOriginals.map(o => o.id === info.id ? JSON.parse(JSON.stringify(info.data)) : o);
+                    } 
+                    else if (info.type === 'CREATE') {
+                        const savedItem = { ...info.data, id: info.newId, isNew: false };
+                        newDetails = newDetails.map(d => d.id === info.id ? savedItem : d);
+                        newOriginals.push(JSON.parse(JSON.stringify(savedItem)));
+                    }
+                } else {
+                    const errorData = result.reason?.response?.data;
+                    let specificError = "";
+
+                    if (errorData?.errors) {
+                        // Gabungin semua pesan error validasi (title, amount, payment, dll)
+                        specificError = Object.values(errorData.errors).flat().join(', ');
+                    } else {
+                        specificError = errorData?.message || result.reason?.message || "Unknown Error";
+                    }
+
+                    const actionLabel = task.type.charAt(0) + task.type.slice(1).toLowerCase();
+                    
+                    // Format: (Action) - Title - Specific Error (e.g. The title field is required)
+                    errorMessages.push(`(${actionLabel}) - ${displayTitle} - ${specificError}`);
+                }
             });
 
-            // Execute Creates
-            toCreate.forEach(item => {
-                promises.push(axios.post('/outcome-details', {
-                    outcome_id: Number(outcomeId),
-                    master_payment_id: Number(item.master_payment_id),
-                    title: item.title,
-                    amount: Number(item.amount),
-                    date: item.date,
-                    note: item.note,
-                    tags: item.tags
-                }));
-            });
+            setDetails(newDetails);
+            setOriginalDetails(newOriginals);
 
-            await Promise.all(promises);
-            alert("All changes saved successfully!");
-            fetchData(); // Sync ulang
+            if (errorMessages.length === 0) {
+            alert("SUCCESS\n\nAll changes have been saved successfully.");
+            } else {
+                alert(
+                    `SAVED WITH ERRORS\n\n` +
+                    `Some changes were saved successfully, but the following items failed to process:\n\n` +
+                    errorMessages.join('\n') + 
+                    `\n\nPlease resolve the issues above and try saving again.`
+                );
+            }
         } catch (err) {
             console.error(err);
-            alert("Some changes failed to save.");
         } finally {
             setSubmitting(false);
         }
