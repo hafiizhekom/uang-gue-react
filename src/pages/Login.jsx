@@ -3,8 +3,11 @@ import axios from 'axios';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 export default function Login() {
+  const { toast, showToast, hideToast } = useToast()
   const [loading, setLoading] = useState(false);
   const setAuth = useAuthStore((state) => state.setAuth);
   const navigate = useNavigate();
@@ -12,24 +15,34 @@ export default function Login() {
   const handleGoogleSuccess = async (credentialResponse) => {
     setLoading(true);
     try {
-      // Mengirim id_token ke Laravel
       const res = await axios.post('/auth/google', { 
         id_token: credentialResponse.credential 
       });
       
-      // Simpan data user dan token aplikasi
       setAuth(res.data.user, res.data.access_token);
-      navigate('/');
+      
+      // 1. Munculin Toast dulu
+      showToast("Login Successful! Redirecting...", "success");
+      
+      // 2. Kasih delay 1-1.5 detik baru pindah page
+      setTimeout(() => {
+        navigate('/');
+      }, 1500); 
+
     } catch (err) {
       console.error("Google Auth Error:", err.response?.data);
-      alert(err.response?.data?.message || "Login Gagal. Pastikan akun Anda terdaftar.");
+      const errorMsg = err.response?.data?.message || "Login Failed. Please ensure your account is registered.";
+      showToast(errorMsg, "error");
     } finally {
-      setLoading(false);
+      // Jangan langsung set loading false di sini kalau sukses, 
+      // biar tombolnya tetep disable pas lagi nunggu timeout.
+      if (!res?.data?.access_token) setLoading(false);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4 font-sans">
+      <Toast data={toast} onClose={hideToast} />
       <div className="max-w-sm w-full bg-white rounded-[3rem] shadow-2xl shadow-slate-200/50 border border-slate-100 p-12 space-y-10 animate-in fade-in zoom-in duration-500">
         
         {/* LOGO AREA */}
@@ -55,7 +68,7 @@ export default function Login() {
           <div className={`w-full flex justify-center transition-all duration-300 ${loading ? 'opacity-50 pointer-events-none scale-95' : 'hover:scale-105'}`}>
             <GoogleLogin
               onSuccess={handleGoogleSuccess}
-              onError={() => alert('Google Login Gagal')}
+              onError={() => showToast("Google Sign-In failed to initialize.", "error")}
               useOneTap
               theme="filled_blue"
               shape="pill"

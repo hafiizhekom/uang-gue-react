@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 export default function MasterPeriod() {
+  const { toast, showToast, hideToast } = useToast();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -19,6 +22,7 @@ export default function MasterPeriod() {
       setData(res.data.data);
     } catch (err) {
       console.error("Fetch error:", err);
+      showToast("Failed to fetch period data.", "error");
     } finally {
       setLoading(false);
     }
@@ -39,13 +43,28 @@ export default function MasterPeriod() {
     e.preventDefault();
     setProcessing(true);
     try {
-      if (modalType === 'add') { await axios.post('/master-periods', formData); }
-      else if (modalType === 'edit') { await axios.put(`/master-periods/${selectedItem.id}`, formData); }
-      else if (modalType === 'delete') { await axios.delete(`/master-periods/${selectedItem.id}`); }
+      if (modalType === 'add') { 
+        await axios.post('/master-periods', formData); 
+        showToast("Period created successfully!", "success");
+      }
+      else if (modalType === 'edit') { 
+        await axios.put(`/master-periods/${selectedItem.id}`, formData); 
+        showToast("Period updated successfully!", "success");
+      }
+      else if (modalType === 'delete') { 
+        await axios.delete(`/master-periods/${selectedItem.id}`); 
+        showToast("Period deleted successfully!", "success");
+      }
       setModalOpen(false);
       fetchData();
     } catch (err) {
-      alert(err.response?.data?.message || "Operation failed");
+      const errorData = err.response?.data;
+      // Ambil message utama atau validation errors dari Laravel
+      showToast(
+        errorData?.message || "Operation failed", 
+        "error", 
+        errorData?.errors
+      );
     } finally {
       setProcessing(false);
     }
@@ -53,6 +72,7 @@ export default function MasterPeriod() {
 
   return (
     <div className="p-8 space-y-6">
+      <Toast data={toast} onClose={hideToast} />
       <header className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Master Period</h2>

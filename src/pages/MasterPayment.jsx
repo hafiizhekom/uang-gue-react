@@ -1,8 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 export default function Wallet() {
+    const { toast, showToast, hideToast } = useToast();
     const [wallets, setWallets] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -77,13 +80,17 @@ export default function Wallet() {
                 const res = await axios.put(`/master-payments/${currentId}`, payload);
                 const updated = res.data?.data || res.data;
                 setWallets(prev => prev.map(w => w.id === currentId ? { ...w, ...updated } : w));
+                showToast("Wallet updated successfully!", "success");
             } else {
                 const res = await axios.post('/master-payments', payload);
                 const newItem = res.data?.data || res.data;
                 setWallets(prev => [...prev, newItem]);
+                showToast("New wallet created successfully!", "success");
             }
             setShowModal(false);
-        } catch (err) { alert("Action Failed!"); } 
+        } catch (err) { 
+            showToast("Failed to load wallets data.", "error");
+        } 
         finally { setSubmitting(false); }
     };
 
@@ -93,7 +100,10 @@ export default function Wallet() {
             await axios.delete(`/master-payments/${deleteTarget}`);
             setWallets(prev => prev.filter(w => w.id !== deleteTarget));
             setShowDeleteModal(false);
-        } catch (err) { alert("Delete Failed!"); } 
+            showToast("Wallet deleted successfully!", "success");
+        } catch (err) { 
+            showToast(err.response?.data?.message || "Delete Failed!", "error");
+        } 
         finally { setSubmitting(false); setDeleteTarget(null); }
     };
 
@@ -108,6 +118,8 @@ export default function Wallet() {
 
     return (
         <div className="p-8 space-y-8 min-h-screen bg-slate-50 text-slate-800 animate-in fade-in duration-500">
+
+            <Toast data={toast} onClose={hideToast} />
             {/* HEADER SUMMARY */}
             <header className="flex justify-between items-center">
                 <div>

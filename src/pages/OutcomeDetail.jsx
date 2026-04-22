@@ -1,10 +1,13 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 export default function OutcomeDetail() {
     const { outcomeId } = useParams();
     const location = useLocation();
+    const { toast, showToast, hideToast } = useToast();
 
     const navigate = useNavigate();
     
@@ -41,9 +44,11 @@ export default function OutcomeDetail() {
             setOriginalDetails(JSON.parse(JSON.stringify(mapped))); // Deep clone untuk komparasi
             setMasterPayments(resPay.data?.data || []);
             setMasterTags(resTag.data?.data || []);
-        } catch (err) { console.error(err); } 
+        } catch (err) { 
+            showToast("Failed to sync data with server", "error");
+        } 
         finally { setLoading(false); }
-    }, [outcomeId]);
+    }, [outcomeId, showToast]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -135,7 +140,7 @@ export default function OutcomeDetail() {
         ];
 
         if (tasks.length === 0) {
-            alert("No changes detected.");
+            showToast("No changes detected.", "info");
             setSubmitting(false);
             return;
         }
@@ -188,17 +193,17 @@ export default function OutcomeDetail() {
             setOriginalDetails(newOriginals);
 
             if (errorMessages.length === 0) {
-            alert("SUCCESS\n\nAll changes have been saved successfully.");
+                showToast("All changes have been saved successfully.", "success");
             } else {
-                alert(
-                    `SAVED WITH ERRORS\n\n` +
-                    `Some changes were saved successfully, but the following items failed to process:\n\n` +
-                    errorMessages.join('\n') + 
-                    `\n\nPlease resolve the issues above and try saving again.`
+                showToast(
+                    "Some changes failed to save.", 
+                    "error", 
+                    { batch_errors: errorMessages } // Custom format agar ditangkap Toast.jsx
                 );
             }
         } catch (err) {
             console.error(err);
+            showToast("Critical system error during batch save.", "error");
         } finally {
             setSubmitting(false);
         }
@@ -261,6 +266,7 @@ export default function OutcomeDetail() {
 
     return (
         <div className="p-8 space-y-8 min-h-screen bg-slate-50 text-slate-800">
+            <Toast data={toast} onClose={hideToast} />
             <header className="flex justify-between items-end">
                 <div>
                     <h2 className="text-4xl font-black tracking-tighter text-slate-900 leading-none">Outcome Detail {outcomeTitle}</h2>

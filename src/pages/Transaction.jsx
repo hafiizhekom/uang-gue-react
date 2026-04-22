@@ -1,8 +1,11 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 export default function Transaction() {
+    const { toast, showToast, hideToast } = useToast();
     const { periodId } = useParams();
     const navigate = useNavigate();
     
@@ -115,9 +118,11 @@ export default function Transaction() {
             setMasterPays(resMP.data?.data || resMP.data || []);
             setMasterTypes(resMT.data?.data || resMT.data || []);
             setActivePeriod(resP.data?.data || resP.data || null);
-        } catch (err) { console.error("Fetch Error:", err); } 
+        } catch (err) { 
+            showToast("Failed to load transaction data.", "error");
+        } 
         finally { setLoading(false); }
-    }, [periodId]);
+    }, [periodId, showToast]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
@@ -196,9 +201,11 @@ export default function Transaction() {
                     setOutcomes(prev => [responseData, ...prev]);
                 }
             }
+            showToast(`${modalType.toUpperCase()} saved successfully!`, "success");
             setShowModal(false);
         } catch (err) { 
-            alert("Error saving data."); 
+            const errorData = err.response?.data;
+            showToast(errorData?.message || "Error saving data.", "error", errorData?.errors);
         } finally { 
             setSubmitting(false); 
         }
@@ -214,8 +221,11 @@ export default function Transaction() {
             } else {
                 setOutcomes(prev => prev.filter(item => item.id !== deleteTarget.id));
             }
+            showToast(`${deleteTarget.type.toUpperCase()} deleted successfully!`, "success");
             setShowDeleteModal(false);
-        } catch (err) { alert("Delete Failed!"); } 
+        } catch (err) { 
+            showToast("Delete Failed!", "error");
+        } 
         finally { setSubmitting(false); setDeleteTarget(null); }
     };
 
@@ -297,6 +307,7 @@ export default function Transaction() {
 
     return (
         <div className="p-8 space-y-10 min-h-screen bg-slate-50 text-slate-800">
+            <Toast data={toast} onClose={hideToast} />
             <header className="flex justify-between items-start">
                 <div>
                     <h2 className="text-4xl font-black tracking-tighter text-slate-900">{activePeriod?.name}</h2>

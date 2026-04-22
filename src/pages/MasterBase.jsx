@@ -1,7 +1,10 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import { useToast } from '../hooks/useToast';
+import Toast from '../components/Toast';
 
 export default function MasterBase({ title, endpoint, countKey, color }) {
+  const { toast, showToast, hideToast } = useToast();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
@@ -26,7 +29,9 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
     try {
       const res = await axios.get(endpoint);
       setData(res.data.data);
-    } catch (err) { console.error(err); } 
+    } catch (err) { 
+      showToast("Failed to load master data.", "error");
+    } 
     finally { setLoading(false); }
   };
 
@@ -69,15 +74,23 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
         const res = await axios.post(endpoint, formData);
         const newItem = res.data.data || res.data;
         setData((prev) => [...prev, newItem]);
+        showToast(`${title} created successfully!`, 'success');
       } else {
         await axios.put(`${endpoint}/${selectedItem.id}`, { name: formData.name });
         setData((prev) => prev.map(item => 
           item.id === selectedItem.id ? { ...item, name: formData.name } : item
         ));
+        showToast(`${title} updated successfully!`, 'success');
       }
       setShowModal(false);
-    } catch (err) { alert("Action failed"); } 
-    finally { setProcessing(false); }
+    } catch (err) { 
+      const errorData = err.response?.data;
+      showToast(
+          errorData?.message || "Something went wrong", 
+          "error", 
+          errorData?.errors
+      );
+    } finally { setProcessing(false); }
   };
 
   const executeDelete = async () => {
@@ -86,8 +99,11 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
       await axios.delete(`${endpoint}/${selectedItem.id}`);
       setData((prev) => prev.filter(item => item.id !== selectedItem.id));
       setShowDeleteModal(false);
-    } catch (err) { alert("Delete failed"); } 
-    finally { setProcessing(false); }
+      showToast(`${title} deleted successfully!`, 'success');
+    } catch (err) { 
+      const errorData = err.response?.data;
+      showToast(errorData?.message || "Delete failed", "error"); 
+    } finally { setProcessing(false); }
   };
 
   // EARLY RETURN: Jangan render apapun kecuali loading screen
@@ -102,6 +118,7 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
 
   return (
     <div className="p-8 space-y-6">
+      <Toast data={toast} onClose={hideToast} />
       <header className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-800 tracking-tight">{title}</h2>
