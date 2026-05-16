@@ -12,6 +12,7 @@ import Transaction from './pages/Transaction';
 import PeriodList from './pages/PeriodList';
 import Wallet from './pages/MasterPayment';
 import OutcomeDetail from './pages/OutcomeDetail';
+import UserLog from './pages/UserLog';
 
 export default function App() {
   const token = useAuthStore((state) => state.token);
@@ -53,6 +54,8 @@ export default function App() {
 
                   {/* Link ini yang dipake saat user klik tombol DETAIL di tabel Outcome */}
                   <Route path="/outcome-detail/:outcomeId" element={<OutcomeDetail />} />
+
+                  <Route path="/log" element={<UserLog />} />
                   
                   <Route path="*" element={<div className="p-20 text-center font-black uppercase text-slate-300">404 - Not Found</div>} />
                 </Routes>
