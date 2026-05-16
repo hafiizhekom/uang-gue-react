@@ -95,7 +95,7 @@ export default function Dashboard() {
       {/* HEADER SECTION */}
       <header className="flex justify-between items-end">
         <div>          
-          <h2 className="text-4xl font-black tracking-tighter text-slate-900 leading-none">DASHBOARD</h2>
+          <h2 className="text-4xl font-black tracking-tighter text-slate-900 leading-none">Dashboard</h2>
           <p className="text-emerald-500 font-bold uppercase text-[10px] tracking-widest mt-2 font-mono">
             {stats.active_period} • {stats.period_range}
           </p>
