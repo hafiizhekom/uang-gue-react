@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useToast } from '../hooks/useToast';
 import Toast from '../components/Toast';
@@ -15,7 +15,7 @@ export default function UserLog() {
         try {
             const res = await axios.get(`/activity-logs?page=${page}`);
             // DEBUG: Cek di console (F12) strukturnya bener gak
-            console.log("Full Response:", res.data);
+            // console.log("Full Response:", res.data);
             const { data, ...meta } = res.data.data;
             setLogs(data);
             setPagination(meta);
@@ -63,12 +63,35 @@ export default function UserLog() {
         return formatted.replace(',', '');
     };
 
-    const formatIDR = (val) => {
-        if (!val) return "-";
-        return new Intl.NumberFormat('id-ID', {
-            style: 'currency', currency: 'IDR', minimumFractionDigits: 0
-        }).format(val);
+    const formatLogCurrency = (key, value) => {
+        // Jika key urusan duit, format ke Rupiah dengan benar
+        if (key.includes('amount') || key.includes('balance')) {
+            if (value === null || value === undefined || value === 'kosong' || value === '') return 'Rp 0';
+            
+            const floatNum = parseFloat(value);
+            const num = isNaN(floatNum) ? 0 : Math.floor(floatNum);
+            
+            return new Intl.NumberFormat('id-ID', {
+                style: 'currency',
+                currency: 'IDR',
+                minimumFractionDigits: 0
+            }).format(num);
+        }
+        
+        // Kalau bukan urusan duit, balikin nilai aslinya (atau strip jika kosong)
+        return value === null || value === undefined || value === '' ? '-' : String(value);
     };
+
+    const sortedLogs = useMemo(() => {
+        if (!logs || logs.length === 0) return [];
+        
+        return [...logs].sort((a, b) => {
+            const timeA = new Date(a.created_at).getTime() || 0;
+            const timeB = new Date(b.created_at).getTime() || 0;
+            
+            return timeB - timeA; // Besar dikurang kecil = descending (terbaru ke tertua)
+        });
+    }, [logs]);
 
     if (loading && logs.length === 0) {
         return <div className="flex items-center justify-center min-h-screen font-black text-slate-400 uppercase tracking-widest text-[10px]">Loading Logs...</div>;
@@ -93,7 +116,7 @@ export default function UserLog() {
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-50">
-                        {logs.map((log) => (
+                        {sortedLogs.map((log) => (
                             <tr key={log.id} className="hover:bg-slate-50/50 transition-colors">
                                 <td className="p-6 px-8">
                                     <p className="text-xs font-bold text-slate-700">{formatDate(log.created_at)}<br></br>{formatTime(log.created_at)}</p>
@@ -140,15 +163,6 @@ export default function UserLog() {
 
                                                     const formatValue = (value) => {
                                                         if (value === null || value === undefined || value === 'kosong' || value === '') return '-';
-                                                        
-                                                        if (key.includes('amount') || key.includes('balance')) {
-                                                            const num = Number(value.toString().replace(/\D/g, ''));
-                                                            return isNaN(num) ? value : new Intl.NumberFormat('id-ID', {
-                                                                style: 'currency',
-                                                                currency: 'IDR',
-                                                                minimumFractionDigits: 0
-                                                            }).format(num);
-                                                        }
 
                                                         if (key.includes('date')) {
                                                             try {
@@ -172,17 +186,14 @@ export default function UserLog() {
 
                                                     return (
                                                         <div key={key} className="leading-tight flex justify-between gap-4 text-slate-500 font-bold">
-                                                            {/* Label Key di sebelah kiri */}
                                                             <span className="text-slate-400 min-w-[60px]">{cleanKey}</span>
-                                                            
-                                                            {/* Detail Perubahan rata kanan */}
                                                             <span className="text-right flex items-center gap-1 flex-wrap justify-end">
                                                                 <span className="text-slate-400 line-through font-normal">
-                                                                    {formatValue(valLama)}
+                                                                    {formatLogCurrency(key, valLama)}
                                                                 </span>
                                                                 <span className="text-slate-400 font-normal">→</span>
                                                                 <span className={`font-black ${isPrimary ? 'text-slate-900' : 'text-slate-800'}`}>
-                                                                    {formatValue(valBaru)}
+                                                                    {formatLogCurrency(key, valBaru)}
                                                                 </span>
                                                             </span>
                                                         </div>
@@ -222,14 +233,6 @@ export default function UserLog() {
                                                     const formatValue = (val) => {
                                                         if (val === null || val === undefined || val === '') return '-';
 
-                                                        if (key.includes('amount') || key.includes('balance')) {
-                                                            const num = Number(val.toString().replace(/\D/g, ''));
-                                                            return isNaN(num) ? val : new Intl.NumberFormat('id-ID', {
-                                                                style: 'currency',
-                                                                currency: 'IDR',
-                                                                minimumFractionDigits: 0
-                                                            }).format(num);
-                                                        }
 
                                                         if (key.includes('date')) {
                                                             try {
@@ -256,7 +259,7 @@ export default function UserLog() {
                                                         <p key={key} className="leading-tight flex justify-between gap-4">
                                                             <span className="font-bold text-slate-400 min-w-[60px]">{cleanKey}</span>
                                                             <span className={`text-right ${isPrimary ? 'text-slate-900 font-black' : 'text-slate-700 font-medium'}`}>
-                                                                {formatValue(rawValue)}
+                                                                {key.includes('date') ? (rawValue ? formatDateTime(rawValue) : '-') : formatLogCurrency(key, rawValue)}
                                                             </span>
                                                         </p>
                                                     );
