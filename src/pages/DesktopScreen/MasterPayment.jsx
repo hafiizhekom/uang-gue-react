@@ -1,8 +1,8 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { useToast } from '../hooks/useToast';
-import Toast from '../components/Toast';
+import { useToast } from '../../hooks/useToast';
+import Toast from '../../components/Toast';
 
 export default function Wallet() {
     const { toast, showToast, hideToast } = useToast();

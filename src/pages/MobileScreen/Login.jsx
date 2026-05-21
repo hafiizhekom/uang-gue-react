@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { useAuthStore } from '../store/useAuthStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { useNavigate } from 'react-router-dom';
 import { GoogleLogin } from '@react-oauth/google';
-import { useToast } from '../hooks/useToast';
-import Toast from '../components/Toast';
+import { useToast } from '../../hooks/useToast';
+import Toast from '../../components/Toast';
 
 export default function Login() {
   const { toast, showToast, hideToast } = useToast()
@@ -53,7 +53,7 @@ export default function Login() {
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">
             Uang<span className="text-emerald-500">Gue</span>
           </h1>
-          <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">Personal Financial Tracker</p>
+          <p className="text-slate-400 text-xs font-black uppercase tracking-[0.2em]">Personal Financial Tracker (Mobile)</p>
         </div>
 
         {/* INSTRUCTION */}

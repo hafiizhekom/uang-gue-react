@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
-import { useToast } from '../hooks/useToast';
-import Toast from '../components/Toast';
+import { useToast } from '../../hooks/useToast';
+import Toast from '../../components/Toast';
 
 const PRIORITY_KEYS = ['title', 'name', 'amount', 'balance', 'note', 'date'];
 const IGNORED_KEYS  = ['action', 'updated_at', 'created_at'];
