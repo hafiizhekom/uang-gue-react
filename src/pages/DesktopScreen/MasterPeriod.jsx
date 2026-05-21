@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { useToast } from '../hooks/useToast';
-import Toast from '../components/Toast';
+import { useToast } from '../../hooks/useToast';
+import Toast from '../../components/Toast';
 
 export default function MasterPeriod() {
   const { toast, showToast, hideToast } = useToast();
