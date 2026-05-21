@@ -315,7 +315,7 @@ export default function Transaction() {
                     
                     <div className={`inline-flex flex-col p-5 rounded-[2rem] border shadow-sm ${isSurplus ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">
-                            {isSurplus ? 'Monthly Surplus' : 'Monthly Deficit'}
+                            Period Balance
                         </span>
                         <h4 className={`text-3xl font-black tracking-tighter ${isSurplus ? 'text-emerald-600' : 'text-rose-600'}`}>
                             {formatIDR(balance)}

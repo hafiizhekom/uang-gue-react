@@ -4,7 +4,7 @@ const masterItems = [
   {
     label: 'Period',
     path: '/master-period',
-    desc: 'Kelola periode keuangan',
+    desc: 'Manage Period',
     color: 'bg-indigo-50 text-indigo-500',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -16,7 +16,7 @@ const masterItems = [
   {
     label: 'Income Type',
     path: '/master-income-type',
-    desc: 'Jenis-jenis pemasukan',
+    desc: 'Manage Income Types',
     color: 'bg-emerald-50 text-emerald-500',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -28,7 +28,7 @@ const masterItems = [
   {
     label: 'Outcome Category',
     path: '/master-outcome-category',
-    desc: 'Kategori pengeluaran',
+    desc: 'Manage Outcome Categories',
     color: 'bg-rose-50 text-rose-500',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -40,7 +40,7 @@ const masterItems = [
   {
     label: 'Outcome Type',
     path: '/master-outcome-type',
-    desc: 'Jenis-jenis pengeluaran',
+    desc: 'Manage Outcome Types',
     color: 'bg-amber-50 text-amber-500',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,7 +52,7 @@ const masterItems = [
   {
     label: 'Outcome Detail Tag',
     path: '/master-outcome-detail-tag',
-    desc: 'Tag detail pengeluaran',
+    desc: 'Manage Outcome Detail Tags',
     color: 'bg-purple-50 text-purple-500',
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -100,6 +100,7 @@ export default function Transaction() {
     const totalIncome  = useMemo(() => incomes.reduce((s, i) => s + (Number(i.amount) || 0), 0), [incomes]);
     const totalOutcome = useMemo(() => outcomes.reduce((s, i) => s + (Number(i.amount) || 0), 0), [outcomes]);
     const netBalance   = useMemo(() => totalIncome - totalOutcome, [totalIncome, totalOutcome]);
+    const isSurplus = netBalance >= 0;
 
     const dateLimits = useMemo(() => ({
         min: activePeriod?.start_date?.split('T')[0] || '',
@@ -221,8 +222,10 @@ export default function Transaction() {
                 </div>
                 <div className="mt-4 bg-slate-900 rounded-2xl p-4 text-white shadow-lg flex items-center justify-between">
                     <div>
-                        <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Sisa Saldo Bersih</p>
-                        <h2 className="text-xl font-black tracking-tight text-emerald-400 mt-0.5">{formatIDR(netBalance)}</h2>
+                        <p className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Period Balance</p>
+                        <h2 className={`text-xl font-black tracking-tight mt-0.5 ${isSurplus ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            {formatIDR(netBalance)}
+                        </h2>
                     </div>
                     <div className="text-right border-l border-slate-800 pl-4">
                         <p className="text-[8px] font-bold text-emerald-300 uppercase">In: {formatIDR(totalIncome)}</p>
@@ -250,12 +253,20 @@ export default function Transaction() {
                         <div key={item.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                             <div className="flex justify-between items-start gap-3">
                                 <div className="min-w-0">
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                                        {item.type?.name || '-'}
-                                    </p>
+                                    {item.type?.name && (
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">
+                                            {item.type.name}
+                                        </p>
+                                    )}
                                     <h4 className="font-black text-slate-800 text-sm truncate mt-0.5">{item.title}</h4>
                                     <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md mt-1.5 inline-block">
-                                        💳 {item.payment?.name || '-'}
+                                        <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md">
+                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M5 7h14a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2zm7 3h.01" />
+                                            </svg>
+
+                                            <span>{item.payment?.name || '-'}</span>
+                                        </span>
                                     </span>
                                 </div>
                                 <div className="text-right flex-shrink-0">
@@ -274,17 +285,26 @@ export default function Transaction() {
                         <div key={item.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
                             <div className="flex justify-between items-start gap-3">
                                 <div className="min-w-0">
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">
-                                        {item.type?.name || '-'}
-                                    </p>
+                                    {item.type?.name && (
+                                        <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">
+                                            {item.type.name}
+                                        </p>
+                                    )}
                                     <h4 className="font-black text-slate-800 text-sm truncate mt-0.5">{item.title}</h4>
                                     <div className="flex flex-wrap gap-1 mt-1.5">
-                                        <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-md">
-                                            📁 {item.category?.name || '-'}
+                                        <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded-md">
+                                            <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                            </svg>
+                                            <span>{item.category?.name || '-'}</span>
                                         </span>
                                         {!item.has_detail && (
-                                            <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md">
-                                                💳 {item.payment?.name || '-'}
+                                            <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-indigo-50 text-indigo-600 rounded-md">
+                                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M5 7h14a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2V9a2 2 0 012-2zm7 3h.01" />
+                                                </svg>
+
+                                                <span>{item.payment?.name || '-'}</span>
                                             </span>
                                         )}
                                     </div>
