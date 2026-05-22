@@ -4,9 +4,12 @@ import { isMobile } from 'react-device-detect';
 import { useAuthStore } from './store/useAuthStore';
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
+import ReactGA from 'react-ga4';
+import { useLocation } from 'react-router-dom';
 
 // ─── Deteksi Mobile: device-detect ATAU screen width < 768px ─────────────────
 const MOBILE_BREAKPOINT = 768;
+ReactGA.initialize(import.meta.env.VITE_GA_ID);
 
 function useIsMobile() {
   const [mobile, setMobile] = useState(
@@ -20,6 +23,14 @@ function useIsMobile() {
   }, []);
 
   return mobile;
+}
+
+function GATracker() {
+  const location = useLocation();
+  useEffect(() => {
+    ReactGA.send({ hitType: 'pageview', page: location.pathname });
+  }, [location]);
+  return null;
 }
 
 // ─── Helper: auto-pilih folder Desktop atau Mobile ───────────────────────────
@@ -54,6 +65,7 @@ export default function App() {
 
   return (
     <Router>
+      <GATracker />
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen text-slate-400">Loading...</div>}>
         <Routes>
           <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
