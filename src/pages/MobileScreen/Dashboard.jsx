@@ -1,8 +1,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 
@@ -19,32 +18,6 @@ const formatShort = (val) => {
   if (val >= 1_000) return `Rp${(val / 1_000).toFixed(0)}rb`;
   return `Rp${val}`;
 };
-
-// ─── Quick Menu ───────────────────────────────────────────────────────────────
-const quickMenus = [
-  {
-    label: 'Master Data',
-    path: '/master',
-    color: 'bg-indigo-50 text-indigo-500',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-          d="M4 7v10c0 2.21 3.58 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.58 4 8 4s8-1.79 8-4M4 7c0-2.21 3.58-4 8-4s8 1.79 8 4" />
-      </svg>
-    ),
-  },
-  {
-    label: 'Activity Log',
-    path: '/log',
-    color: 'bg-amber-50 text-amber-500',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
-          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-];
 
 export default function Dashboard() {
   const [data, setData] = useState(null);
@@ -105,19 +78,17 @@ export default function Dashboard() {
   const isUnder = s.status === 'under';
 
   return (
-    <div className="bg-slate-50 min-h-screen pb-6">
+    <div className="bg-slate-50 min-h-screen">
 
       {/* ── TOP HEADER ── */}
       <div className="bg-emerald-500 px-5 pt-10 pb-6 rounded-b-[2rem]">
         <div className="flex justify-between items-start">
-          {/* Left: Period */}
           <div>
             <p className="text-[9px] font-black uppercase tracking-widest text-emerald-100/70">Active Period</p>
             <h1 className="text-lg font-black text-white tracking-tighter mt-0.5">{s.active_period}</h1>
             <p className="text-[10px] text-emerald-100/70 font-bold mt-0.5">{s.period_range}</p>
           </div>
 
-          {/* Right: Wallet Balance */}
           <div className="text-right">
             <p className="text-[9px] font-black uppercase tracking-widest text-emerald-100/70">Wallet Balance</p>
             <p className="text-lg font-black text-white tracking-tighter mt-0.5">{formatShort(s.total_wallet_amount)}</p>
@@ -129,26 +100,13 @@ export default function Dashboard() {
       </div>
 
       <div className="px-4 space-y-5 mt-5">
-
-        {/* ── QUICK MENU ── */}
-        <div className="grid grid-cols-2 gap-3">
-          {quickMenus.map(m => (
-            <button key={m.path} onClick={() => navigate(m.path)}
-              className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl p-4 shadow-sm active:scale-95 transition-all text-left">
-              <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${m.color}`}>
-                {m.icon}
-              </div>
-              <span className="font-black text-xs text-slate-700 uppercase tracking-wide leading-tight">{m.label}</span>
-            </button>
-          ))}
-        </div>
-
-        {/* ── STATS ROW ── */}
+        {/* STATS ROW */}
         <div className="grid grid-cols-3 gap-2">
           <StatPill label="Income" value={formatShort(s.monthly_income)} color="text-emerald-500" />
           <StatPill label="Outcome" value={formatShort(s.monthly_outcome)} color="text-rose-500" />
           <StatPill label="Net" value={formatShort(s.net_savings)} color="text-indigo-500" />
         </div>
+
         <div className="bg-white border border-slate-100 rounded-2xl p-3 shadow-sm flex justify-between items-center">
           <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Unaccounted Diff</p>
           <p className={`text-sm font-black tracking-tight ${s.total_wallet_amount - s.net_savings >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
@@ -156,7 +114,7 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* ── DAILY BAR CHART ── */}
+        {/* DAILY BAR CHART */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
           <div>
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Daily Statistics</p>
@@ -165,10 +123,10 @@ export default function Dashboard() {
           <DailyBarChart data={trend} formatShort={formatShort} formatIDR={formatIDR} />
         </div>
 
-        {/* ── DAILY TRANSACTION TABLE ── */}
+        {/* DAILY TRANSACTION TABLE */}
         <DailyCashflowTableMobile data={trend} formatShort={formatShort} formatIDR={formatIDR} />
 
-        {/* ── BREAKDOWN ── */}
+        {/* BREAKDOWN */}
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Breakdown</p>
           <div className="space-y-3">
@@ -178,7 +136,6 @@ export default function Dashboard() {
             <BreakdownCard title="Income by Type"      data={charts.income_breakdown.by_type}      colors={['#10b981','#34d399','#059669']} />
           </div>
         </div>
-
       </div>
     </div>
   );
@@ -218,7 +175,6 @@ function DailyBarChart({ data, formatShort, formatIDR }) {
 
   return (
     <div className="space-y-3">
-      {/* Mode Selector */}
       <div className="flex justify-between items-center">
         <div className="flex gap-1.5 text-[9px] font-black uppercase">
           <button
@@ -245,7 +201,6 @@ function DailyBarChart({ data, formatShort, formatIDR }) {
         </div>
       </div>
 
-      {/* Mini Stats Summary Pills */}
       <div className="grid grid-cols-2 gap-2 text-left">
         <div className="bg-rose-50/50 p-2.5 rounded-xl border border-rose-100">
           <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">Average/Day</p>
@@ -257,7 +212,6 @@ function DailyBarChart({ data, formatShort, formatIDR }) {
         </div>
       </div>
 
-      {/* Bar Chart Canvas */}
       <div className="h-[220px] w-full pt-1">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={processedData} margin={{ top: 15, right: 0, left: -20, bottom: 0 }} barGap={2}>
@@ -298,7 +252,6 @@ function DailyBarChart({ data, formatShort, formatIDR }) {
   );
 }
 
-// ─── DAILY CASHFLOW TABLE MOBILE ───
 function DailyCashflowTableMobile({ data, formatShort, formatIDR }) {
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -329,7 +282,6 @@ function DailyCashflowTableMobile({ data, formatShort, formatIDR }) {
 
   return (
     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
-      {/* Header */}
       <div className="flex justify-between items-center">
         <div>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Financial Breakdown</p>
@@ -337,7 +289,6 @@ function DailyCashflowTableMobile({ data, formatShort, formatIDR }) {
         </div>
       </div>
 
-      {/* Filter / Search */}
       <div className="relative">
         <input
           type="text"
@@ -351,7 +302,6 @@ function DailyCashflowTableMobile({ data, formatShort, formatIDR }) {
         </svg>
       </div>
 
-      {/* Summary Bar */}
       <div className="grid grid-cols-3 gap-1 bg-slate-50 p-2 rounded-xl text-center border border-slate-100">
         <div>
           <p className="text-[7px] font-black uppercase text-slate-400">Income</p>
@@ -369,7 +319,6 @@ function DailyCashflowTableMobile({ data, formatShort, formatIDR }) {
         </div>
       </div>
 
-      {/* Responsive Table */}
       <div className="overflow-x-auto max-h-[280px] overflow-y-auto custom-scrollbar border border-slate-200/80 rounded-xl">
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 bg-slate-900 text-white z-10 text-[9px] font-black uppercase">
@@ -413,7 +362,7 @@ function DailyCashflowTableMobile({ data, formatShort, formatIDR }) {
   );
 }
 
-function MobileTooltip({ active, payload, label, formatShort, formatIDR }) {
+function MobileTooltip({ active, payload, label, formatShort }) {
   if (!active || !payload || !payload.length) return null;
 
   const incomeObj = payload.find(p => p.dataKey === 'income_total');
@@ -472,13 +421,11 @@ function BreakdownCard({ title, data, colors }) {
 
   return (
     <div className="bg-white border border-slate-100 rounded-2xl shadow-sm p-4">
-      {/* Header */}
       <div className="flex justify-between items-start mb-3">
         <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{title}</p>
         <p className="text-sm font-black text-slate-800 tracking-tight">{formatShort(total)}</p>
       </div>
 
-      {/* List */}
       <div className="space-y-2.5">
         {visible.map((item, i) => {
           const pct = total > 0 ? (item.total / total) * 100 : 0;
@@ -494,7 +441,6 @@ function BreakdownCard({ title, data, colors }) {
                   <span className="text-[11px] font-black text-slate-700">{formatShort(item.total)}</span>
                 </div>
               </div>
-              {/* Progress bar */}
               <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
                 <div className="h-full rounded-full transition-all duration-500"
                   style={{ width: `${pct}%`, backgroundColor: colors[i % colors.length] }} />
@@ -504,48 +450,12 @@ function BreakdownCard({ title, data, colors }) {
         })}
       </div>
 
-      {/* Show more / less */}
       {sorted.length > 3 && (
         <button onClick={() => setExpanded(e => !e)}
           className="mt-3 w-full text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-600 transition-colors">
           {expanded ? '▲ Show less' : `▼ +${sorted.length - 3} more`}
         </button>
       )}
-    </div>
-  );
-}
-
-function DonutCard({ title, data, colors }) {
-  const sorted = useMemo(() => [...data].sort((a, b) => b.total - a.total), [data]);
-  const total  = useMemo(() => sorted.reduce((s, i) => s + i.total, 0), [sorted]);
-
-  return (
-    <div className="flex-shrink-0 w-[160px] bg-white border border-slate-100 rounded-2xl p-3 shadow-sm">
-      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 truncate">{title}</p>
-      <div className="h-[100px] relative">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie data={sorted} innerRadius={32} outerRadius={44} paddingAngle={6} dataKey="total" stroke="none">
-              {sorted.map((_, i) => <Cell key={i} fill={colors[i % colors.length]} />)}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-          <p className="text-[7px] font-black text-slate-300 uppercase">Total</p>
-          <p className="text-[10px] font-black text-slate-700">{(total / 1_000_000).toFixed(1)}jt</p>
-        </div>
-      </div>
-      <div className="space-y-1 mt-1">
-        {sorted.slice(0, 3).map((item, i) => (
-          <div key={i} className="flex items-center gap-1.5 text-[9px] font-bold">
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: colors[i % colors.length] }} />
-            <span className="text-slate-400 truncate flex-1">{item.name}</span>
-          </div>
-        ))}
-        {sorted.length > 3 && (
-          <p className="text-[8px] text-slate-300 font-bold">+{sorted.length - 3} more</p>
-        )}
-      </div>
     </div>
   );
 }
