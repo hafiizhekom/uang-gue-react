@@ -49,6 +49,8 @@ const Transaction = screen(() => import('./pages/DesktopScreen/Transaction'), ()
 const PeriodList  = screen(() => import('./pages/DesktopScreen/PeriodList'),  () => import('./pages/MobileScreen/PeriodList'));
 const Wallet      = screen(() => import('./pages/DesktopScreen/MasterPayment'),() => import('./pages/MobileScreen/MasterPayment'));
 const OutcomeDetail=screen(() => import('./pages/DesktopScreen/OutcomeDetail'),() => import('./pages/MobileScreen/OutcomeDetail'));
+const ReportMonthly = screen(() => import('./pages/DesktopScreen/ReportMonthly'), () => import('./pages/MobileScreen/ReportMonthly'));
+const ReportRange   = screen(() => import('./pages/DesktopScreen/ReportRange'),   () => import('./pages/MobileScreen/ReportRange'));
 const UserLog     = screen(() => import('./pages/DesktopScreen/UserLog'),     () => import('./pages/MobileScreen/UserLog'));
 
 // Mobile-only screen (tidak ada padanannya di desktop)
@@ -83,6 +85,8 @@ export default function App() {
                 <Route path="/transactions"              element={<PeriodList />} />
                 <Route path="/transactions/:periodId"    element={<Transaction />} />
                 <Route path="/outcome-detail/:outcomeId" element={<OutcomeDetail />} />
+                <Route path="/report/:periodId?" element={<ReportMonthly />} />
+                <Route path="/report-range" element={<ReportRange />} />
                 <Route path="/log"                       element={<UserLog />} />
                 
                 {/* Mobile-only: Master menu list — redirect ke / kalau desktop */}

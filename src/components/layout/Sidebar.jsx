@@ -1,16 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 export default function Sidebar() {
   const location = useLocation();
   const [openMaster, setOpenMaster] = useState(true);
+  const [openReport, setOpenReport] = useState(location.pathname.startsWith('/report'));
 
   // Cek active state buat transaksi
   const isTransactionActive = location.pathname.startsWith('/transactions');
   // Cek active state buat wallet
   const isWalletActive = location.pathname === '/wallets';
-    // Cek active state buat wallet
+  // Cek active state buat log
   const isLogActive = location.pathname === '/log';
+  // Cek active state buat report group
+  const isReportGroupActive = location.pathname.startsWith('/report');
 
   const masterMenus = [
     { name: 'Period', path: '/master-period' },
@@ -18,6 +21,11 @@ export default function Sidebar() {
     { name: 'Outcome Category', path: '/master-outcome-category' },
     { name: 'Outcome Type', path: '/master-outcome-type' },
     { name: 'Outcome Detail Tag', path: '/master-outcome-detail-tag' },
+  ];
+
+  const reportMenus = [
+    { name: 'Report Period', path: '/report' },
+    { name: 'Report Range', path: '/report-range' },
   ];
 
   const menuClass = (isActive) => 
@@ -74,7 +82,7 @@ export default function Sidebar() {
             </div>
           )}
 
-          {/* Wallets (Di luar Master Data, tapi tetap di group Configuration) */}
+          {/* Wallets */}
           <Link to="/wallets" className={menuClass(isWalletActive)}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -112,13 +120,54 @@ export default function Sidebar() {
             </svg>
             <span className="tracking-wide uppercase">Activity Log</span>
           </Link>
+
+          {/* Report Dropdown (Sama persis dengan Master Data Dropdown) */}
+          <button
+            onClick={() => setOpenReport(!openReport)}
+            className={`w-full flex items-center justify-between p-3 rounded-xl transition-all outline-none mb-1 ${
+              isReportGroupActive ? 'bg-slate-800/40 text-white' : 'text-slate-500 hover:bg-slate-800'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 17v-6m3 6V7m3 10v-3m5 8H4a2 2 0 01-2-2V4a2 2 0 012-2h9l7 7v11a2 2 0 01-2 2z"
+                />
+              </svg>
+              <span className="text-xs font-black tracking-widest uppercase">Report</span>
+            </div>
+            <svg className={`w-4 h-4 transition-transform ${openReport ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {openReport && (
+            <div className="mt-1 mb-2 space-y-1 bg-slate-800/10 rounded-2xl py-2">
+              {reportMenus.map((sub) => (
+                <Link key={sub.path} to={sub.path} className={subMenuClass(sub.path)}>
+                  {sub.name}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
 
       </nav>
       
       {/* Logout button */}
       <div className="p-4 border-t border-slate-800">
-        <button onClick={() => { localStorage.clear(); window.location.href = '/login'; }} className="w-full flex items-center justify-center gap-3 p-4 text-rose-400 hover:bg-rose-500/10 rounded-2xl transition-all font-black text-xs tracking-widest border border-rose-500/20 active:scale-95">
+        <button 
+          onClick={() => { localStorage.clear(); window.location.href = '/login'; }} 
+          className="w-full flex items-center justify-center gap-3 p-4 text-rose-400 hover:bg-rose-500/10 rounded-2xl transition-all font-black text-xs tracking-widest border border-rose-500/20 active:scale-95"
+        >
           LOGOUT
         </button>
       </div>
