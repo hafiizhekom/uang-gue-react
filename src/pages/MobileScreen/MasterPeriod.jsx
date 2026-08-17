@@ -14,7 +14,7 @@ export default function MasterPeriod() {
   const [modalType, setModalType] = useState('add');
   const [selectedItem, setSelectedItem] = useState(null);
   
-  const [formData, setFormData] = useState({ name: '', start_date: '', end_date: '' });
+  const [formData, setFormData] = useState({ name: '', start_date: '', end_date: '', balance: '' });
   const navigate = useNavigate();
 
   const fetchData = async () => {
@@ -37,7 +37,12 @@ export default function MasterPeriod() {
   const openModal = (type, item = null) => {
     setModalType(type);
     setSelectedItem(item);
-    setFormData({ name: item?.name || '', start_date: item?.start_date || '', end_date: item?.end_date || '' });
+    setFormData({
+      name: item?.name || '',
+      start_date: item?.start_date || '',
+      end_date: item?.end_date || '',
+      balance: item?.opening_balance ?? '',
+    });
     setModalOpen(true);
   };
 
@@ -45,11 +50,14 @@ export default function MasterPeriod() {
     e.preventDefault();
     setProcessing(true);
     try {
+      const { balance, ...rest } = formData;
+      const payload = { ...rest, opening_balance: parseInt(balance, 10) || 0 };
+
       if (modalType === 'add') {
-        await axios.post('/master-periods', formData);
+        await axios.post('/master-periods', payload);
         showToast("Period created successfully!", "success");
       } else if (modalType === 'edit') {
-        await axios.put(`/master-periods/${selectedItem.id}`, formData);
+        await axios.put(`/master-periods/${selectedItem.id}`, payload);
         showToast("Period updated successfully!", "success");
       } else if (modalType === 'delete') {
         await axios.delete(`/master-periods/${selectedItem.id}`);
@@ -69,6 +77,11 @@ export default function MasterPeriod() {
     if (!dateString) return '-';
     const options = { year: 'numeric', month: 'short', day: 'numeric' };
     return new Date(dateString).toLocaleDateString('id-ID', options);
+  };
+
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === '') return '-';
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
   };
 
   if (loading) {
@@ -135,6 +148,10 @@ export default function MasterPeriod() {
                     <h4 className="font-black text-slate-800 text-sm truncate leading-snug">{item.name}</h4>
                     <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">ID: {item.id}</p>
                   </div>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Balance</p>
+                  <p className="text-xs font-black text-emerald-600 mt-0.5">{formatCurrency(item.opening_balance)}</p>
                 </div>
               </div>
 
@@ -212,6 +229,11 @@ export default function MasterPeriod() {
                       <label className="text-[10px] font-black uppercase text-slate-400 ml-1">End Date</label>
                       <input required type="date" value={formData.end_date} onChange={(e) => setFormData({...formData, end_date: e.target.value})} className="w-full p-3.5 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-700 text-sm" />
                     </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-black uppercase text-slate-400 ml-1">Opening Balance</label>
+                    <input required type="number" min="0" step="1" value={formData.balance} onChange={(e) => setFormData({...formData, balance: e.target.value})} placeholder="e.g., 2000000" className="w-full p-3.5 bg-slate-100 rounded-2xl border-none focus:ring-2 focus:ring-slate-900 font-bold text-slate-700 text-sm" />
                   </div>
                 </>
               )}
