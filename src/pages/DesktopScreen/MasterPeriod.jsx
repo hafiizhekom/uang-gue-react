@@ -13,7 +13,7 @@ export default function MasterPeriod() {
   const [modalType, setModalType] = useState('add');
   const [selectedItem, setSelectedItem] = useState(null);
   
-  const [formData, setFormData] = useState({ name: '', start_date: '', end_date: '' });
+  const [formData, setFormData] = useState({ name: '', start_date: '', end_date: '', opening_balance: '' });
 
   const fetchData = async () => {
     setLoading(true);
@@ -35,7 +35,12 @@ export default function MasterPeriod() {
   const openModal = (type, item = null) => {
     setModalType(type);
     setSelectedItem(item);
-    setFormData({ name: item?.name || '', start_date: item?.start_date || '', end_date: item?.end_date || '' });
+    setFormData({
+      name: item?.name || '',
+      start_date: item?.start_date || '',
+      end_date: item?.end_date || '',
+      balance: item?.opening_balance ?? '',
+    });
     setModalOpen(true);
   };
 
@@ -43,12 +48,14 @@ export default function MasterPeriod() {
     e.preventDefault();
     setProcessing(true);
     try {
+      const { balance, ...rest } = formData;
+      const payload = { ...rest, opening_balance: parseInt(balance, 10) || 0 };
       if (modalType === 'add') { 
-        await axios.post('/master-periods', formData); 
+        await axios.post('/master-periods', payload); 
         showToast("Period created successfully!", "success");
       }
       else if (modalType === 'edit') { 
-        await axios.put(`/master-periods/${selectedItem.id}`, formData); 
+        await axios.put(`/master-periods/${selectedItem.id}`, payload); 
         showToast("Period updated successfully!", "success");
       }
       else if (modalType === 'delete') { 
@@ -68,6 +75,11 @@ export default function MasterPeriod() {
     } finally {
       setProcessing(false);
     }
+  };
+
+  const formatCurrency = (value) => {
+    if (value === null || value === undefined || value === '') return '-';
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(value);
   };
 
   return (
@@ -93,6 +105,7 @@ export default function MasterPeriod() {
             <tr>
               <th className="p-5 px-8">Period Name</th>
               <th className="p-5 px-8 text-center">Date Range</th>
+              <th className="p-5 px-8 text-center">Balance</th>
               <th className="p-5 px-8 text-center text-emerald-600">Incomes</th>
               <th className="p-5 px-8 text-center text-rose-600">Outcomes</th>
               <th className="p-5 px-8 text-right">Actions</th>
@@ -100,9 +113,9 @@ export default function MasterPeriod() {
           </thead>
           <tbody className="divide-y divide-slate-50">
             {loading ? (
-              <tr><td colSpan="5" className="p-16 text-center text-slate-400 animate-pulse font-medium italic">Loading data...</td></tr>
+              <tr><td colSpan="6" className="p-16 text-center text-slate-400 animate-pulse font-medium italic">Loading data...</td></tr>
             ) : data.length === 0 ? (
-              <tr><td colSpan="5" className="p-16 text-center text-slate-400">No data available.</td></tr>
+              <tr><td colSpan="6" className="p-16 text-center text-slate-400">No data available.</td></tr>
             ) : data.map((item) => (
               <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                 <td className="p-5 px-8 font-bold text-slate-700">{item.name}</td>
@@ -111,6 +124,7 @@ export default function MasterPeriod() {
                       {item.start_date} <span className="text-slate-300">→</span> {item.end_date}
                    </div>
                 </td>
+                <td className="p-5 px-8 text-center font-black text-slate-600">{formatCurrency(item.opening_balance)}</td>
                 <td className="p-5 px-8 text-center font-black text-emerald-500">{item.count_incomes}</td>
                 <td className="p-5 px-8 text-center font-black text-rose-500">{item.count_outcomes}</td>
                 <td className="p-5 px-8 text-right space-x-5">
@@ -149,6 +163,10 @@ export default function MasterPeriod() {
                       <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">End Date</label>
                       <input required type="date" value={formData.end_date} onChange={(e) => setFormData({...formData, end_date: e.target.value})} className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-emerald-500 focus:bg-white outline-none transition-all font-semibold" />
                     </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Opening Balance</label>
+                    <input required type="number" min="0" step="1" value={formData.balance} onChange={(e) => setFormData({...formData, balance: e.target.value})} className="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all font-semibold" placeholder="e.g. 2000000" />
                   </div>
                 </>
               )}
