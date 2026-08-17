@@ -125,7 +125,7 @@ export default function Sidebar() {
           <button
             onClick={() => setOpenReport(!openReport)}
             className={`w-full flex items-center justify-between p-3 rounded-xl transition-all outline-none mb-1 ${
-              isReportGroupActive ? 'bg-slate-800/40 text-white' : 'text-slate-500 hover:bg-slate-800'
+              isReportGroupActive ? 'bg-slate-800/40 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-white'
             }`}
           >
             <div className="flex items-center gap-3">
@@ -142,7 +142,7 @@ export default function Sidebar() {
                   d="M9 17v-6m3 6V7m3 10v-3m5 8H4a2 2 0 01-2-2V4a2 2 0 012-2h9l7 7v11a2 2 0 01-2 2z"
                 />
               </svg>
-              <span className="text-xs font-black tracking-widest uppercase">Report</span>
+              <span className="font-bold text-sm tracking-wide uppercase">Report</span>
             </div>
             <svg className={`w-4 h-4 transition-transform ${openReport ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
