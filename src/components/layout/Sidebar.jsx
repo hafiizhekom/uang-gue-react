@@ -35,12 +35,17 @@ export default function Sidebar() {
       : 'text-slate-400 hover:bg-slate-800 hover:text-white'
     }`;
 
-  const subMenuClass = (path) => 
-    `block p-2 pl-12 rounded-r-xl text-[11px] font-black uppercase tracking-widest transition-all ${
-      location.pathname === path 
-      ? 'text-emerald-400 border-l-4 border-emerald-400 bg-emerald-400/5' 
-      : 'text-slate-500 hover:text-slate-200'
+  const subMenuClass = (path) => {
+    const isActive =
+      location.pathname === path ||
+      (path === '/report' && location.pathname.startsWith('/report/'));
+
+    return `block p-2 pl-12 rounded-r-xl text-[11px] font-black uppercase tracking-widest transition-all ${
+      isActive
+        ? 'text-emerald-400 border-l-4 border-emerald-400 bg-emerald-400/5'
+        : 'text-slate-500 hover:text-slate-200'
     }`;
+  };
 
   return (
     <aside className="w-64 bg-slate-900 text-white hidden md:flex flex-col shrink-0 min-h-screen border-r border-slate-800 sticky top-0">

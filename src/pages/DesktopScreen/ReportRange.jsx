@@ -16,10 +16,10 @@ const currentYearRange = () => {
 };
 
 const TREND_META = {
-  increasingly_wasteful: { label: 'Makin Boros', color: 'text-rose-600 bg-rose-50 border-rose-100' },
-  increasingly_frugal:   { label: 'Makin Hemat', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
-  stable:                { label: 'Stabil', color: 'text-slate-600 bg-slate-100 border-slate-200' },
-  not_enough_data:       { label: 'Data Kurang', color: 'text-slate-400 bg-slate-50 border-slate-100' },
+  increasingly_wasteful: { label: 'Increasingly Wasteful', color: 'text-rose-600 bg-rose-50 border-rose-100' },
+  increasingly_frugal:   { label: 'Increasingly Frugal', color: 'text-emerald-600 bg-emerald-50 border-emerald-100' },
+  stable:                { label: 'Stable', color: 'text-slate-600 bg-slate-100 border-slate-200' },
+  not_enough_data:       { label: 'Insufficient Data', color: 'text-slate-400 bg-slate-50 border-slate-100' },
 };
 
 export default function ReportRange() {
@@ -72,7 +72,7 @@ export default function ReportRange() {
         <div>
           <h2 className="text-4xl font-black tracking-tighter text-slate-900 leading-none">Report Range</h2>
           <p className="text-emerald-500 font-bold uppercase text-[10px] tracking-widest mt-2 font-mono">
-            Bandingkan pengeluaran & pemasukan antar period
+            Compare income & expenses across periods
           </p>
         </div>
 
@@ -129,24 +129,24 @@ export default function ReportRange() {
             <StatCard title="Avg Outcome / Period" value={range.summary.avg_outcome_per_period} color="text-slate-900 font-extrabold" />
           </div>
 
-          {/* BALANCE GROWTH — saldo awal range vs saldo akhir range */}
+          {/* BALANCE GROWTH — starting vs ending range balance */}
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-            <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400 mb-5">Pertumbuhan Saldo Sepanjang Range</h4>
+            <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400 mb-5">Balance Growth Across Range</h4>
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="text-center sm:text-left">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Saldo Awal</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Starting Balance</p>
                 <p className="text-xl font-black tracking-tight text-slate-700 mt-1">{formatIDR(range.summary.starting_balance)}</p>
               </div>
               <svg className="w-6 h-6 text-slate-300 rotate-90 sm:rotate-0 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
               </svg>
               <div className="text-center sm:text-left">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Saldo Akhir</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Ending Balance</p>
                 <p className="text-xl font-black tracking-tight text-slate-900 mt-1">{formatIDR(range.summary.ending_balance)}</p>
               </div>
               <div className={`text-center sm:text-left px-5 py-3 rounded-2xl border ${range.summary.total_balance_growth >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
                 <p className={`text-[10px] font-black uppercase tracking-widest ${range.summary.total_balance_growth >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
-                  {range.summary.total_balance_growth >= 0 ? 'Pertumbuhan' : 'Penurunan'}
+                  {range.summary.total_balance_growth >= 0 ? 'Growth' : 'Decline'}
                 </p>
                 <p className={`text-xl font-black tracking-tight mt-1 ${range.summary.total_balance_growth >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
                   {range.summary.total_balance_growth >= 0 ? '+' : ''}{formatIDR(range.summary.total_balance_growth)}
@@ -162,44 +162,44 @@ export default function ReportRange() {
               <p className="text-xl font-black tracking-tight mt-1">{TREND_META[range.summary.overall_trend]?.label || range.summary.overall_trend}</p>
               {range.summary.avg_change_percent !== null && (
                 <p className="text-xs font-bold opacity-70 mt-1">
-                  Rata-rata perubahan {range.summary.avg_change_percent > 0 ? '+' : ''}{range.summary.avg_change_percent}% / period
+                  Average change {range.summary.avg_change_percent > 0 ? '+' : ''}{range.summary.avg_change_percent}% / period
                 </p>
               )}
             </div>
 
             <div className="p-6 rounded-[2rem] bg-rose-50 border border-rose-100 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">Bulan Paling Boros</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">Most Wasteful Month</p>
               <p className="text-xl font-black tracking-tight text-rose-700 mt-1">{range.summary.most_wasteful_period?.name || '-'}</p>
               <p className="text-xs font-bold text-rose-500 mt-1">{formatIDR(range.summary.most_wasteful_period?.total_outcome)}</p>
             </div>
 
             <div className="p-6 rounded-[2rem] bg-emerald-50 border border-emerald-100 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Bulan Paling Hemat</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Most Frugal Month</p>
               <p className="text-xl font-black tracking-tight text-emerald-700 mt-1">{range.summary.most_frugal_period?.name || '-'}</p>
               <p className="text-xs font-bold text-emerald-600 mt-1">{formatIDR(range.summary.most_frugal_period?.total_outcome)}</p>
             </div>
           </div>
 
-          {/* DEFICIT/SURPLUS HIGHLIGHT — performa period murni (income - outcome), gak ketutupan opening balance */}
+          {/* DEFICIT/SURPLUS HIGHLIGHT */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="p-6 rounded-[2rem] bg-rose-50 border border-rose-100 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">Period Paling Defisit</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">Most Deficit Period</p>
               <p className="text-xl font-black tracking-tight text-rose-700 mt-1">{range.summary.most_deficit_period?.name || '-'}</p>
               <p className="text-xs font-bold text-rose-500 mt-1">{formatIDR(range.summary.most_deficit_period?.period_surplus_deficit)}</p>
             </div>
 
             <div className="p-6 rounded-[2rem] bg-emerald-50 border border-emerald-100 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Period Paling Surplus</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Most Surplus Period</p>
               <p className="text-xl font-black tracking-tight text-emerald-700 mt-1">{range.summary.most_surplus_period?.name || '-'}</p>
               <p className="text-xs font-bold text-emerald-600 mt-1">+{formatIDR(range.summary.most_surplus_period?.period_surplus_deficit)}</p>
             </div>
 
             <div className="p-6 rounded-[2rem] bg-slate-100 border border-slate-200 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Period Defisit</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Deficit Periods</p>
               <p className="text-xl font-black tracking-tight text-slate-800 mt-1">
-                {range.summary.deficit_periods_count} <span className="text-xs font-bold text-slate-400">/ {range.summary.total_periods} period</span>
+                {range.summary.deficit_periods_count} <span className="text-xs font-bold text-slate-400">/ {range.summary.total_periods} periods</span>
               </p>
-              <p className="text-xs font-bold text-slate-500 mt-1">Outcome lebih besar dari income</p>
+              <p className="text-xs font-bold text-slate-500 mt-1">Outcome exceeds income</p>
             </div>
           </div>
 
@@ -207,7 +207,7 @@ export default function ReportRange() {
           <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-6">
             <div>
               <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Income vs Outcome</h4>
-              <p className="text-xl font-black tracking-tight text-slate-900 mt-1">Perbandingan Antar Period</p>
+              <p className="text-xl font-black tracking-tight text-slate-900 mt-1">Period-over-Period Comparison</p>
             </div>
             <div className="h-[360px] w-full">
               <ResponsiveContainer width="100%" height="100%">
@@ -256,7 +256,7 @@ function StatCard({ title, value, color = 'text-slate-900 font-extrabold', isCou
     <div className="bg-white text-slate-900 border border-slate-100 p-8 rounded-[2.5rem] shadow-sm">
       <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">{title}</p>
       <h3 className={`text-2xl font-black tracking-tighter ${color}`}>
-        {isCount ? Number(value || 0).toLocaleString('id-ID') : formatIDR(value)}
+        {isCount ? Number(value || 0).toLocaleString('en-US') : formatIDR(value)}
       </h3>
     </div>
   );
@@ -295,12 +295,12 @@ function PeriodComparisonTable({ periods, formatIDR }) {
     <div className="bg-white rounded-[2.5rem] border border-slate-200/80 shadow-sm p-8 space-y-6">
       <div className="border-b border-slate-100 pb-5 flex items-start justify-between gap-4">
         <div>
-          <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Bulan ke Bulan</h4>
+          <h4 className="font-black text-xs uppercase tracking-[0.2em] text-slate-400">Month to Month</h4>
           <h3 className="text-xl font-black text-slate-900 tracking-tight mt-1">Period Comparison Table</h3>
         </div>
-        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400" title="Muncul kalau saldo awal period tidak sama dengan saldo akhir period sebelumnya (ada penyesuaian manual di luar income/outcome tercatat)">
+        <div className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400" title="Appears if the opening balance of the period does not match the closing balance of the previous period (manual adjustment outside recorded income/outcome)">
           <span className="w-2 h-2 rounded-full bg-amber-400 inline-block flex-shrink-0" />
-          Saldo tidak nyambung dari bulan sebelumnya
+          Discontinuous balance from previous month
         </div>
       </div>
 
@@ -309,12 +309,12 @@ function PeriodComparisonTable({ periods, formatIDR }) {
           <thead className="sticky top-0 bg-slate-900 text-white z-10">
             <tr className="text-[10px] font-black uppercase tracking-wider">
               <th className="py-3.5 px-6">Period</th>
-              <th className="py-3.5 px-6 text-right">Saldo Awal</th>
+              <th className="py-3.5 px-6 text-right">Starting Balance</th>
               <th className="py-3.5 px-6 text-right">Income</th>
               <th className="py-3.5 px-6 text-right">Outcome</th>
-              <th className="py-3.5 px-6 text-right">Surplus / Defisit</th>
-              <th className="py-3.5 px-6 text-right">Saldo Akhir</th>
-              <th className="py-3.5 px-6 text-right">vs Bulan Lalu</th>
+              <th className="py-3.5 px-6 text-right">Surplus / Deficit</th>
+              <th className="py-3.5 px-6 text-right">Ending Balance</th>
+              <th className="py-3.5 px-6 text-right">vs Last Month</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-xs font-bold">
@@ -326,7 +326,7 @@ function PeriodComparisonTable({ periods, formatIDR }) {
                     {p.opening_balance_continuous === false && (
                       <span
                         className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block flex-shrink-0"
-                        title={`Saldo awal beda ${formatIDR(Math.abs(p.opening_balance_gap))} dari saldo akhir period sebelumnya`}
+                        title={`Starting balance differs by ${formatIDR(Math.abs(p.opening_balance_gap))} from previous period closing balance`}
                       />
                     )}
                   </p>
