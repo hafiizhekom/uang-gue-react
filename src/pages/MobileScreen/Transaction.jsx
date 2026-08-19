@@ -4,6 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import Toast from '../../components/Toast';
 
+// Outcome dianggap ikut ke total kecuali kategorinya eksplisit is_counted === false
+const isOutcomeCounted = (item) => item?.category?.is_counted !== false;
+
 export default function Transaction() {
     const { toast, showToast, hideToast } = useToast();
     const { periodId } = useParams();
@@ -98,7 +101,13 @@ export default function Transaction() {
     useEffect(() => { fetchAllData(); }, [fetchAllData]);
 
     const totalIncome  = useMemo(() => incomes.reduce((s, i) => s + (Number(i.amount) || 0), 0), [incomes]);
-    const totalOutcome = useMemo(() => outcomes.reduce((s, i) => s + (Number(i.amount) || 0), 0), [outcomes]);
+
+    // Outcome yang category-nya is_counted === false TIDAK masuk total
+    const totalOutcome = useMemo(
+        () => outcomes.reduce((s, i) => s + (isOutcomeCounted(i) ? (Number(i.amount) || 0) : 0), 0),
+        [outcomes]
+    );
+
     const netBalance   = useMemo(() => totalIncome - totalOutcome, [totalIncome, totalOutcome]);
     const isSurplus = netBalance >= 0;
 
@@ -281,8 +290,10 @@ export default function Transaction() {
                         </div>
                     )) : <p className="text-center text-[10px] text-slate-400 font-black uppercase py-8">Belum ada data pemasukan</p>
                 ) : (
-                    outcomes.length > 0 ? outcomes.map(item => (
-                        <div key={item.id} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                    outcomes.length > 0 ? outcomes.map(item => {
+                        const counted = isOutcomeCounted(item);
+                        return (
+                        <div key={item.id} className={`bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-3 ${!counted ? 'opacity-60' : ''}`}>
                             <div className="flex justify-between items-start gap-3">
                                 <div className="min-w-0">
                                     {item.type?.name && (
@@ -307,6 +318,11 @@ export default function Transaction() {
                                                 <span>{item.payment?.name || '-'}</span>
                                             </span>
                                         )}
+                                        {!counted && (
+                                            <span className="inline-flex items-center gap-1 text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-slate-100 text-slate-400 rounded-md">
+                                                Not Counted
+                                            </span>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="text-right flex-shrink-0">
@@ -329,7 +345,8 @@ export default function Transaction() {
                                 </div>
                             </div>
                         </div>
-                    )) : <p className="text-center text-[10px] text-slate-400 font-black uppercase py-8">Belum ada data pengeluaran</p>
+                        );
+                    }) : <p className="text-center text-[10px] text-slate-400 font-black uppercase py-8">Belum ada data pengeluaran</p>
                 )}
             </div>
 
@@ -401,6 +418,17 @@ export default function Transaction() {
                                                 onChange={v => setFormData({ ...formData, master_payment_id: v })} required />
                                         )}
                                     </div>
+                                    {(() => {
+                                        const selectedCat = masterCats.find(c => String(c.id) === String(formData.master_outcome_category_id));
+                                        if (!selectedCat || selectedCat.is_counted !== false) return null;
+                                        return (
+                                            <div className="px-3 py-2 bg-slate-50 border border-slate-100 rounded-xl">
+                                                <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider">
+                                                    ⓘ Kategori ini tidak dihitung ke total outcome periode.
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
                                     {/* Fix: Outcome Type ada */}
                                     <SelectField label="Outcome Type (Optional)" value={formData.master_outcome_type_id}
                                         options={masterOutTypes} onChange={v => setFormData({ ...formData, master_outcome_type_id: v })}
