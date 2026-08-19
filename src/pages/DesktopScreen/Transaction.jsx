@@ -4,6 +4,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import Toast from '../../components/Toast';
 
+// Outcome dianggap ikut ke total kecuali kategorinya eksplisit is_counted === false
+const isOutcomeCounted = (item) => item?.category?.is_counted !== false;
+
 export default function Transaction() {
     const { toast, showToast, hideToast } = useToast();
     const { periodId } = useParams();
@@ -83,8 +86,13 @@ export default function Transaction() {
 
     // --- CALCULATIONS ---
     const totalInc = useMemo(() => incomes.reduce((s, i) => s + (Number(i?.amount) || 0), 0), [incomes]);
-    const totalOut = useMemo(() => outcomes.reduce((s, i) => s + (Number(i?.amount) || 0), 0), [outcomes]);
-    
+
+    // Outcome yang category-nya is_counted === false TIDAK masuk total
+    const totalOut = useMemo(
+        () => outcomes.reduce((s, i) => s + (isOutcomeCounted(i) ? (Number(i?.amount) || 0) : 0), 0),
+        [outcomes]
+    );
+
     const balance = useMemo(() => totalInc - totalOut, [totalInc, totalOut]);
     const isSurplus = balance >= 0;
 
@@ -409,8 +417,10 @@ export default function Transaction() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-50">
-                                {sortedOutcomes.map(out => (
-                                    <tr key={out.id} className="hover:bg-slate-50/50 transition-colors">
+                                {sortedOutcomes.map(out => {
+                                    const counted = isOutcomeCounted(out);
+                                    return (
+                                    <tr key={out.id} className={`hover:bg-slate-50/50 transition-colors ${!counted ? 'opacity-60' : ''}`}>
                                         <td className="py-3 px-8 text-[11px] text-slate-400">{formatDateFull(out.date)}</td>
                                         <td className="py-3 px-8">
                                             <p className="text-slate-700">{out.title}</p>
@@ -421,7 +431,14 @@ export default function Transaction() {
                                             )}
                                         </td>
                                         <td className="py-3 px-8">
-                                            <span className="text-[10px] font-black text-amber-600 uppercase tracking-wider">{out.category?.name}</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <span className="text-[10px] font-black text-amber-600 uppercase tracking-wider">{out.category?.name}</span>
+                                                {!counted && (
+                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded" title="Kategori ini tidak dihitung ke total outcome">
+                                                        Not Counted
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="py-3 px-8 text-center">
                                             <span className="text-[10px] border border-slate-200 px-3 py-1 rounded-full uppercase text-slate-500">{out.payment?.name || '-'}</span>
@@ -439,7 +456,8 @@ export default function Transaction() {
                                             </div>
                                         </td>
                                     </tr>
-                                ))}
+                                    );
+                                })}
                             </tbody>
                         </table>
                     </div>
@@ -493,6 +511,17 @@ export default function Transaction() {
                             {modalType === 'outcome' && (
                                 <>
                                     <SelectGroup label="Outcome Type (Optional)" value={formData.master_outcome_type_id} options={masterTypes} onChange={(v) => setFormData({...formData, master_outcome_type_id: v})} placeholder="-" isAmber />
+                                    {(() => {
+                                        const selectedCat = masterCats.find(c => String(c.id) === String(formData.master_outcome_category_id));
+                                        if (!selectedCat || selectedCat.is_counted !== false) return null;
+                                        return (
+                                            <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-50 border border-slate-100 rounded-xl">
+                                                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+                                                    ⓘ Kategori ini tidak dihitung ke total outcome periode.
+                                                </span>
+                                            </div>
+                                        );
+                                    })()}
                                     <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 mt-2">
                                         <div><p className="text-[11px] font-black uppercase text-slate-900 tracking-tight">Transaction Detail</p><p className="text-[9px] text-slate-400 font-bold uppercase">Enable if this outcome has itemized list</p></div>
                                         <label className={`relative inline-flex items-center ${isEdit ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}>
