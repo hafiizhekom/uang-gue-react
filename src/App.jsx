@@ -78,7 +78,7 @@ export default function App() {
                 <Route path="/"                          element={<Dashboard />} />
                 <Route path="/master-period"             element={<MasterPeriod />} />
                 <Route path="/master-income-type"        element={<MasterBase title="Income Type"           endpoint="/master-income-types"         countKey="count_incomes"         color="emerald" />} />
-                <Route path="/master-outcome-category"   element={<MasterBase title="Outcome Category"      endpoint="/master-outcome-categories"    countKey="count_outcomes"        color="rose"    />} />
+                <Route path="/master-outcome-category" element={<MasterBase title="Outcome Category" endpoint="/master-outcome-categories" countKey="count_outcomes" color="rose" hasIsCounted />} />
                 <Route path="/master-outcome-type"       element={<MasterBase title="Outcome Type"          endpoint="/master-outcome-types"         countKey="count_outcomes"        color="amber"   />} />
                 <Route path="/wallets"                   element={<Wallet />} />
                 <Route path="/master-outcome-detail-tag" element={<MasterBase title="Outcome Detail Tag"    endpoint="/master-outcome-detail-tags"   countKey="count_outcome_details" color="purple"  />} />
