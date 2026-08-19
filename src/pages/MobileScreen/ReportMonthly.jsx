@@ -154,7 +154,7 @@ export default function ReportMonthly() {
             <div className="grid grid-cols-3 gap-2">
               <StatPill label="Income" value={formatShort(report.balance.total_income)} color="text-emerald-500" />
               <StatPill label="Outcome" value={formatShort(report.balance.total_outcome)} color="text-rose-500" />
-              <StatPill label="Net" value={formatShort(report.balance.net_savings)} color="text-indigo-500" />
+              <StatPill label="Net (with Opening Balance)" value={formatShort(report.balance.net_savings)} color="text-indigo-500" />
             </div>
             <div className="bg-white border border-slate-100 rounded-2xl p-3 shadow-sm flex justify-between items-center">
               <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Transactions</p>

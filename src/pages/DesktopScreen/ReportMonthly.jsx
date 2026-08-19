@@ -206,7 +206,7 @@ export default function ReportMonthly() {
             <StatCard title="Total Income" value={report.balance.total_income} color="text-emerald-600 font-extrabold" />
             <StatCard title="Total Outcome" value={report.balance.total_outcome} color="text-rose-600 font-extrabold" />
             <StatCard
-              title="Net Savings"
+              title="Net Savings (with Opening Balance)"
               value={report.balance.net_savings}
               color={report.balance.net_savings >= 0 ? "text-indigo-600 font-extrabold" : "text-rose-600 font-extrabold"}
             />
