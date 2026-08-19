@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useToast } from '../../hooks/useToast';
 import Toast from '../../components/Toast';
 
-export default function MasterBase({ title, endpoint, countKey, color }) {
+export default function MasterBase({ title, endpoint, countKey, color, hasIsCounted = false }) {
   const { toast, showToast, hideToast } = useToast();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [modalType, setModalType] = useState('add');
   const [selectedItem, setSelectedItem] = useState(null);
-  const [formData, setFormData] = useState({ name: '', slug: '' });
+  const [formData, setFormData] = useState({ name: '', slug: '', ...(hasIsCounted ? { is_counted: true } : {}) });
 
   const colorMap = {
     emerald: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20 text-emerald-600 border-emerald-600 focus:ring-emerald-600",
@@ -62,7 +62,11 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
   const openModal = (type, item = null) => {
     setModalType(type);
     setSelectedItem(item);
-    setFormData({ name: item?.name || '', slug: item?.slug || '' });
+    setFormData({
+      name: item?.name || '',
+      slug: item?.slug || '',
+      ...(hasIsCounted ? { is_counted: item ? !!item.is_counted : true } : {})
+    });
     if (type === 'delete') { setShowDeleteModal(true); } else { setShowModal(true); }
   };
 
@@ -71,14 +75,23 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
     setProcessing(true);
     try {
       if (modalType === 'add') {
-        const res = await axios.post(endpoint, formData);
+        const payload = {
+          name: formData.name,
+          slug: formData.slug,
+          ...(hasIsCounted ? { is_counted: formData.is_counted } : {})
+        };
+        const res = await axios.post(endpoint, payload);
         const newItem = res.data.data || res.data;
         setData((prev) => [...prev, newItem]);
         showToast(`${title} created successfully!`, 'success');
       } else {
-        await axios.put(`${endpoint}/${selectedItem.id}`, { name: formData.name });
+        const payload = {
+          name: formData.name,
+          ...(hasIsCounted ? { is_counted: formData.is_counted } : {})
+        };
+        await axios.put(`${endpoint}/${selectedItem.id}`, payload);
         setData((prev) => prev.map(item => 
-          item.id === selectedItem.id ? { ...item, name: formData.name } : item
+          item.id === selectedItem.id ? { ...item, ...payload } : item
         ));
         showToast(`${title} updated successfully!`, 'success');
       }
@@ -142,12 +155,17 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
               <th className="p-5 px-8 text-center cursor-pointer hover:text-slate-600 transition-colors" onClick={() => requestSort(countKey)}>
                 Usage {sortConfig.key === countKey && (sortConfig.direction === 'asc' ? '↑' : '↓')}
               </th>
+              {hasIsCounted && (
+                <th className="p-5 px-8 text-center cursor-pointer hover:text-slate-600 transition-colors" onClick={() => requestSort('is_counted')}>
+                  Counted {sortConfig.key === 'is_counted' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                </th>
+              )}
               <th className="p-5 px-8 text-right">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {sortedData.length === 0 ? (
-              <tr><td colSpan="3" className="p-16 text-center text-slate-400">No data available.</td></tr>
+              <tr><td colSpan={hasIsCounted ? 4 : 3} className="p-16 text-center text-slate-400">No data available.</td></tr>
             ) : sortedData.map((item) => (
               <tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
                 <td className="p-5 px-8">
@@ -157,6 +175,17 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
                 <td className={`p-5 px-8 text-center font-black ${colorMap[color].split(' ')[3]}`}>
                   {item[countKey] || 0}
                 </td>
+                {hasIsCounted && (
+                  <td className="p-5 px-8 text-center">
+                    <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wide border ${
+                      item.is_counted
+                        ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                        : "bg-slate-50 text-slate-400 border-slate-100"
+                    }`}>
+                      {item.is_counted ? "Yes" : "No"}
+                    </span>
+                  </td>
+                )}
                 <td className="p-5 px-8 text-right space-x-5">
                   <button onClick={() => openModal('edit', item)} className="text-indigo-500 hover:text-indigo-700 font-bold text-xs uppercase tracking-tighter transition-colors">Edit</button>
                   <button onClick={() => openModal('delete', item)} className="text-rose-500 hover:text-rose-700 font-bold text-xs uppercase tracking-tighter transition-colors">Delete</button>
@@ -197,6 +226,17 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
                     className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-400 text-sm italic" 
                   />
                 </div>
+              )}
+              {hasIsCounted && (
+                <label className="flex items-center gap-3 p-4 bg-slate-100 rounded-2xl cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.is_counted}
+                    onChange={(e) => setFormData({ ...formData, is_counted: e.target.checked })}
+                    className="w-4 h-4 rounded accent-emerald-600"
+                  />
+                  <span className="text-[11px] font-black uppercase text-slate-600 tracking-wide">Is Counted</span>
+                </label>
               )}
               <button type="submit" disabled={processing} className="w-full py-5 mt-4 bg-slate-900 text-white rounded-[1.5rem] font-black uppercase text-xs tracking-widest hover:bg-emerald-500 transition-all shadow-xl disabled:opacity-50">
                 {processing ? 'Processing...' : 'Save Record'}

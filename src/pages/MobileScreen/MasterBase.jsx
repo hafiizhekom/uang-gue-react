@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../../hooks/useToast';
 import Toast from '../../components/Toast';
 
-export default function MasterBase({ title, endpoint, countKey, color }) {
+export default function MasterBase({ title, endpoint, countKey, color, hasIsCounted = false }) {
   const { toast, showToast, hideToast } = useToast();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +15,7 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [modalType, setModalType] = useState('add');
   const [selectedItem, setSelectedItem] = useState(null);
-  const [formData, setFormData] = useState({ name: '', slug: '' });
+  const [formData, setFormData] = useState({ name: '', slug: '', ...(hasIsCounted ? { is_counted: true } : {}) });
   const navigate = useNavigate();
 
   // Mapping string warna untuk ikon avatar kecil di mobile card
@@ -64,7 +64,8 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
     setSelectedItem(item);
     setFormData({
       name: item?.name || '',
-      slug: item?.slug || ''
+      slug: item?.slug || '',
+      ...(hasIsCounted ? { is_counted: item ? !!item.is_counted : true } : {})
     });
     setShowModal(true);
   };
@@ -73,11 +74,16 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
     e.preventDefault();
     setProcessing(true);
     try {
+      const payload = {
+        name: formData.name,
+        slug: formData.slug,
+        ...(hasIsCounted ? { is_counted: formData.is_counted } : {})
+      };
       if (modalType === 'add') {
-        await axios.post(endpoint, formData);
+        await axios.post(endpoint, payload);
         showToast(`${title} successfully created!`, "success");
       } else {
-        await axios.put(`${endpoint}/${selectedItem.id}`, formData);
+        await axios.put(`${endpoint}/${selectedItem.id}`, payload);
         showToast(`${title} successfully updated!`, "success");
       }
       setShowModal(false);
@@ -167,13 +173,22 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
                   </div>
                 </div>
                 
-                {countKey && (
-                  <div className="text-right">
+                <div className="flex flex-col items-end gap-1.5">
+                  {countKey && (
                     <span className="text-[9px] font-black px-2 py-1 rounded-lg bg-slate-50 text-slate-500 border border-slate-100 uppercase">
                       Used: {item[countKey] || 0}
                     </span>
-                  </div>
-                )}
+                  )}
+                  {hasIsCounted && (
+                    <span className={`text-[9px] font-black px-2 py-1 rounded-lg border uppercase ${
+                      item.is_counted
+                        ? "bg-emerald-50 text-emerald-600 border-emerald-100"
+                        : "bg-slate-50 text-slate-400 border-slate-100"
+                    }`}>
+                      {item.is_counted ? "Counted" : "Not Counted"}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="border-t border-slate-50" />
@@ -217,6 +232,7 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
                   onChange={(e) => {
                     const val = e.target.value;
                     setFormData({
+                      ...formData,
                       name: val,
                       slug: val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
                     });
@@ -232,6 +248,18 @@ export default function MasterBase({ title, endpoint, countKey, color }) {
                   className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl font-bold text-slate-400 text-sm italic" 
                 />
               </div>
+
+              {hasIsCounted && (
+                <label className="flex items-center gap-3 p-3.5 bg-slate-100 rounded-2xl cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={!!formData.is_counted}
+                    onChange={(e) => setFormData({ ...formData, is_counted: e.target.checked })}
+                    className="w-4 h-4 rounded accent-emerald-500"
+                  />
+                  <span className="text-[10px] font-black uppercase text-slate-600 tracking-wide">Is Counted</span>
+                </label>
+              )}
 
               <button type="submit" disabled={processing} className="w-full py-4 mt-2 bg-slate-900 text-white rounded-2xl font-black uppercase text-xs tracking-widest hover:bg-emerald-500 transition-all shadow-xl disabled:opacity-50">
                 {processing ? 'Processing...' : 'Save Changes'}
