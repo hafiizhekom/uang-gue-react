@@ -15,6 +15,13 @@ axios.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // Inject X-Project-Id dari localStorage supaya backend tahu project aktif
+  const activeProject = JSON.parse(localStorage.getItem('activeProject') || 'null');
+  if (activeProject?.id) {
+    config.headers['X-Project-Id'] = activeProject.id;
+  }
+
   return config;
 });
 
@@ -25,6 +32,7 @@ axios.interceptors.response.use(
     if (error.response && error.response.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      localStorage.removeItem('activeProject');
       
       window.location.href = '/login';
     }

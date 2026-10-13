@@ -51,7 +51,8 @@ export default function MobileLayout({ children }) {
   const isMoreActive = 
     location.pathname.startsWith('/master') ||
     location.pathname.startsWith('/log') ||
-    location.pathname.startsWith('/report');
+    location.pathname.startsWith('/report') ||
+    location.pathname === '/projects';
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -137,7 +138,25 @@ export default function MobileLayout({ children }) {
                 </svg>
               </button>
 
-              {/* 2. Activity Log */}
+              {/* 2. Projects */}
+              <button
+                onClick={() => { setMoreModalOpen(false); navigate('/projects'); }}
+                className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm font-black text-sm uppercase tracking-wider text-slate-800 text-left active:scale-95 transition-all hover:bg-slate-100/50"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                    </svg>
+                  </span>
+                  Projects
+                </div>
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* 3. Activity Log */}
               <button
                 onClick={() => { setMoreModalOpen(false); navigate('/log'); }}
                 className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm font-black text-sm uppercase tracking-wider text-slate-800 text-left active:scale-95 transition-all hover:bg-slate-100/50"

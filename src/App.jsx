@@ -52,6 +52,7 @@ const OutcomeDetail=screen(() => import('./pages/DesktopScreen/OutcomeDetail'),(
 const ReportMonthly = screen(() => import('./pages/DesktopScreen/ReportMonthly'), () => import('./pages/MobileScreen/ReportMonthly'));
 const ReportRange   = screen(() => import('./pages/DesktopScreen/ReportRange'),   () => import('./pages/MobileScreen/ReportRange'));
 const UserLog     = screen(() => import('./pages/DesktopScreen/UserLog'),     () => import('./pages/MobileScreen/UserLog'));
+const Projects    = screen(() => import('./pages/DesktopScreen/Projects'),    () => import('./pages/MobileScreen/Projects'));
 
 // Mobile-only screen (tidak ada padanannya di desktop)
 const MasterMenu  = lazy(() => import('./pages/MobileScreen/MasterMenu'));
@@ -88,6 +89,7 @@ export default function App() {
                 <Route path="/report/:periodId?" element={<ReportMonthly />} />
                 <Route path="/report-range" element={<ReportRange />} />
                 <Route path="/log"                       element={<UserLog />} />
+                <Route path="/projects"                 element={<Projects />} />
                 
                 {/* Mobile-only: Master menu list — redirect ke / kalau desktop */}
                 <Route path="/master" element={mobile ? <MasterMenu /> : <Navigate to="/" />} />
