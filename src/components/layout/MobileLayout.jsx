@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useProjectStore } from '../../store/useProjectStore';
+
 
 const navItems = [
   {
@@ -39,6 +42,19 @@ export default function MobileLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const activeProject = useProjectStore((state) => state.activeProject);
+
+  // Role diambil dari pivot project aktif, fallback ke user.role
+  const role = activeProject?.pivot?.role || activeProject?.role || user?.role;
+
+  const ROLE_COLOR = {
+    owner:  'bg-emerald-100 text-emerald-700',
+    member: 'bg-blue-100 text-blue-700',
+    viewer: 'bg-slate-100 text-slate-500',
+  };
+
   // Modal & Report Sub-dropdown State
   const [moreModalOpen, setMoreModalOpen] = useState(false);
   const [reportSubOpen, setReportSubOpen] = useState(false);
@@ -51,7 +67,14 @@ export default function MobileLayout({ children }) {
   const isMoreActive = 
     location.pathname.startsWith('/master') ||
     location.pathname.startsWith('/log') ||
-    location.pathname.startsWith('/report');
+    location.pathname.startsWith('/report') ||
+    location.pathname === '/projects';
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -117,6 +140,23 @@ export default function MobileLayout({ children }) {
               </button>
             </div>
 
+            {/* User Info Card */}
+            <div className="flex items-center gap-3 bg-white border border-slate-200/80 rounded-2xl px-4 py-3 shadow-sm">
+              <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-black text-base text-slate-700 flex-shrink-0">
+                {user?.name?.charAt(0)?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-slate-900 truncate">{user?.name || 'User'}</p>
+                <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
+              </div>
+              {role && (
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider flex-shrink-0 ${ROLE_COLOR[role] || ROLE_COLOR.member}`}>
+                  {role}
+                </span>
+              )}
+            </div>
+
+
             {/* Menu List */}
             <div className="space-y-3">
               {/* 1. Master Data (Langsung Navigate ke /master, Tanpa Sub-menu) */}
@@ -137,7 +177,25 @@ export default function MobileLayout({ children }) {
                 </svg>
               </button>
 
-              {/* 2. Activity Log */}
+              {/* 2. Projects */}
+              <button
+                onClick={() => { setMoreModalOpen(false); navigate('/projects'); }}
+                className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm font-black text-sm uppercase tracking-wider text-slate-800 text-left active:scale-95 transition-all hover:bg-slate-100/50"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-500 flex items-center justify-center">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                    </svg>
+                  </span>
+                  Projects
+                </div>
+                <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+
+              {/* 3. Activity Log */}
               <button
                 onClick={() => { setMoreModalOpen(false); navigate('/log'); }}
                 className="w-full flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-200/80 shadow-sm font-black text-sm uppercase tracking-wider text-slate-800 text-left active:scale-95 transition-all hover:bg-slate-100/50"
@@ -197,12 +255,13 @@ export default function MobileLayout({ children }) {
           {/* Logout Button */}
           <div className="pt-6 border-t border-slate-200/80">
             <button
-              onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
+              onClick={handleLogout}
               className="w-full py-4 text-rose-500 hover:bg-rose-50 rounded-2xl transition-all font-black text-xs tracking-widest border border-rose-200 active:scale-95 bg-white shadow-sm"
             >
               LOGOUT
             </button>
           </div>
+
         </div>
       )}
     </div>

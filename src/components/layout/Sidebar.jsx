@@ -1,10 +1,25 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useProjectStore } from '../../store/useProjectStore';
+
+const ROLE_COLOR = {
+  owner:  'bg-emerald-500/20 text-emerald-400',
+  member: 'bg-blue-500/20 text-blue-400',
+  viewer: 'bg-slate-500/20 text-slate-400',
+};
 
 export default function Sidebar() {
   const location = useLocation();
   const [openMaster, setOpenMaster] = useState(true);
   const [openReport, setOpenReport] = useState(location.pathname.startsWith('/report'));
+
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const activeProject = useProjectStore((state) => state.activeProject);
+
+  // Role diambil dari pivot project aktif, fallback ke user.role
+  const role = activeProject?.pivot?.role || activeProject?.role || user?.role;
 
   // Cek active state buat transaksi
   const isTransactionActive = location.pathname.startsWith('/transactions');
@@ -14,6 +29,8 @@ export default function Sidebar() {
   const isLogActive = location.pathname === '/log';
   // Cek active state buat report group
   const isReportGroupActive = location.pathname.startsWith('/report');
+  // Cek active state buat projects
+  const isProjectsActive = location.pathname === '/projects';
 
   const masterMenus = [
     { name: 'Period', path: '/master-period' },
@@ -45,6 +62,11 @@ export default function Sidebar() {
         ? 'text-emerald-400 border-l-4 border-emerald-400 bg-emerald-400/5'
         : 'text-slate-500 hover:text-slate-200'
     }`;
+  };
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
   };
 
   return (
@@ -107,6 +129,14 @@ export default function Sidebar() {
             <span className="tracking-wide uppercase">Dashboard</span>
           </Link>
 
+          <Link to="/projects" className={menuClass(isProjectsActive)}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+            </svg>
+            <span className="tracking-wide uppercase">Projects</span>
+          </Link>
+
           <Link to="/transactions" className={menuClass(isTransactionActive)}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -167,10 +197,27 @@ export default function Sidebar() {
 
       </nav>
       
-      {/* Logout button */}
-      <div className="p-4 border-t border-slate-800">
+      {/* User Info + Logout */}
+      <div className="p-4 border-t border-slate-800 space-y-3">
+        {/* User Card */}
+        <div className="flex items-center gap-3 px-3 py-2 rounded-2xl bg-slate-800/50">
+          <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center font-black text-sm text-white flex-shrink-0">
+            {user?.name?.charAt(0)?.toUpperCase()}
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-black text-white truncate leading-tight">{user?.name || 'User'}</p>
+            <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
+          </div>
+          {role && (
+            <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider flex-shrink-0 ${ROLE_COLOR[role] || ROLE_COLOR.member}`}>
+              {role}
+            </span>
+          )}
+        </div>
+
+        {/* Logout */}
         <button 
-          onClick={() => { localStorage.clear(); window.location.href = '/login'; }} 
+          onClick={handleLogout}
           className="w-full flex items-center justify-center gap-3 p-4 text-rose-400 hover:bg-rose-500/10 rounded-2xl transition-all font-black text-xs tracking-widest border border-rose-500/20 active:scale-95"
         >
           LOGOUT
