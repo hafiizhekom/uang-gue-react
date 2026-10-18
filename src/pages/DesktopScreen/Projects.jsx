@@ -106,8 +106,8 @@ export default function Projects() {
     setShowMemberModal(true);
     setMemberLoading(true);
     try {
-      const res = await axios.get(`/projects/${project.id}/members`);
-      setMembers(res.data?.data || []);
+      const res = await axios.get(`/projects/${project.id}`);
+      setMembers(res.data?.data?.members || []);
     } catch {
       setMembers([]);
     } finally {
@@ -124,8 +124,8 @@ export default function Projects() {
       showToast('Member berhasil ditambahkan!', 'success');
       setMemberForm({ email: '', role: 'member' });
       // Refresh members
-      const res = await axios.get(`/projects/${selectedProject.id}/members`);
-      setMembers(res.data?.data || []);
+      const res = await axios.get(`/projects/${selectedProject.id}`);
+      setMembers(res.data?.data?.members || []);
     } catch (err) {
       showToast(err.response?.data?.message || 'Gagal menambahkan member.', 'error');
     } finally {
@@ -140,8 +140,8 @@ export default function Projects() {
       await axios.delete(`/projects/${selectedProject.id}/members/${deleteTarget.data.id}`);
       showToast('Member berhasil dikeluarkan.', 'success');
       setShowDeleteModal(false);
-      const res = await axios.get(`/projects/${selectedProject.id}/members`);
-      setMembers(res.data?.data || []);
+      const res = await axios.get(`/projects/${selectedProject.id}`);
+      setMembers(res.data?.data?.members || []);
     } catch (err) {
       showToast(err.response?.data?.message || 'Gagal mengeluarkan member.', 'error');
     } finally {
@@ -432,7 +432,7 @@ export default function Projects() {
               ) : (
                 <ul className="space-y-2">
                   {members.map((member) => {
-                    const memberRole = member.pivot?.role || 'member';
+                    const memberRole = member.pivot?.role || member.role || 'member';
                     const isSelf = member.id === user?.id;
                     const canRemove = isOwner(selectedProject) && !isSelf;
 

@@ -107,8 +107,8 @@ export default function Projects() {
     setShowMemberSheet(true);
     setMemberLoading(true);
     try {
-      const res = await axios.get(`/projects/${project.id}/members`);
-      setMembers(res.data?.data || []);
+      const res = await axios.get(`/projects/${project.id}`);
+      setMembers(res.data?.data?.members || []);
     } catch {
       setMembers([]);
     } finally {
@@ -124,8 +124,8 @@ export default function Projects() {
       await axios.post(`/projects/${selectedProject.id}/members`, memberForm);
       showToast('Member ditambahkan!', 'success');
       setMemberForm({ email: '', role: 'member' });
-      const res = await axios.get(`/projects/${selectedProject.id}/members`);
-      setMembers(res.data?.data || []);
+      const res = await axios.get(`/projects/${selectedProject.id}`);
+      setMembers(res.data?.data?.members || []);
     } catch (err) {
       showToast(err.response?.data?.message || 'Gagal menambahkan.', 'error');
     } finally {
@@ -139,8 +139,8 @@ export default function Projects() {
       await axios.delete(`/projects/${selectedProject.id}/members/${deleteTarget.data.id}`);
       showToast('Member dikeluarkan.', 'success');
       setShowDeleteModal(false);
-      const res = await axios.get(`/projects/${selectedProject.id}/members`);
-      setMembers(res.data?.data || []);
+      const res = await axios.get(`/projects/${selectedProject.id}`);
+      setMembers(res.data?.data?.members || []);
     } catch (err) {
       showToast(err.response?.data?.message || 'Gagal.', 'error');
     } finally {
@@ -397,7 +397,7 @@ export default function Projects() {
               ) : (
                 <ul className="space-y-2 pb-6">
                   {members.map((member) => {
-                    const mRole = member.pivot?.role || 'member';
+                    const mRole = member.pivot?.role || member.role || 'member';
                     const isSelf = member.id === user?.id;
                     const canRemove = isOwner(selectedProject) && !isSelf;
                     return (

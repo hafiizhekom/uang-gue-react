@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useAuthStore } from '../../store/useAuthStore';
+import { useProjectStore } from '../../store/useProjectStore';
+
 
 const navItems = [
   {
@@ -39,6 +42,19 @@ export default function MobileLayout({ children }) {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const user = useAuthStore((state) => state.user);
+  const logout = useAuthStore((state) => state.logout);
+  const activeProject = useProjectStore((state) => state.activeProject);
+
+  // Role diambil dari pivot project aktif, fallback ke user.role
+  const role = activeProject?.pivot?.role || activeProject?.role || user?.role;
+
+  const ROLE_COLOR = {
+    owner:  'bg-emerald-100 text-emerald-700',
+    member: 'bg-blue-100 text-blue-700',
+    viewer: 'bg-slate-100 text-slate-500',
+  };
+
   // Modal & Report Sub-dropdown State
   const [moreModalOpen, setMoreModalOpen] = useState(false);
   const [reportSubOpen, setReportSubOpen] = useState(false);
@@ -53,6 +69,12 @@ export default function MobileLayout({ children }) {
     location.pathname.startsWith('/log') ||
     location.pathname.startsWith('/report') ||
     location.pathname === '/projects';
+
+  const handleLogout = () => {
+    logout();
+    window.location.href = '/login';
+  };
+
 
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 text-slate-900 font-sans">
@@ -117,6 +139,23 @@ export default function MobileLayout({ children }) {
                 ✕
               </button>
             </div>
+
+            {/* User Info Card */}
+            <div className="flex items-center gap-3 bg-white border border-slate-200/80 rounded-2xl px-4 py-3 shadow-sm">
+              <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center font-black text-base text-slate-700 flex-shrink-0">
+                {user?.name?.charAt(0)?.toUpperCase()}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black text-slate-900 truncate">{user?.name || 'User'}</p>
+                <p className="text-[10px] text-slate-400 truncate">{user?.email}</p>
+              </div>
+              {role && (
+                <span className={`text-[9px] font-black px-2 py-0.5 rounded-lg uppercase tracking-wider flex-shrink-0 ${ROLE_COLOR[role] || ROLE_COLOR.member}`}>
+                  {role}
+                </span>
+              )}
+            </div>
+
 
             {/* Menu List */}
             <div className="space-y-3">
@@ -216,12 +255,13 @@ export default function MobileLayout({ children }) {
           {/* Logout Button */}
           <div className="pt-6 border-t border-slate-200/80">
             <button
-              onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
+              onClick={handleLogout}
               className="w-full py-4 text-rose-500 hover:bg-rose-50 rounded-2xl transition-all font-black text-xs tracking-widest border border-rose-200 active:scale-95 bg-white shadow-sm"
             >
               LOGOUT
             </button>
           </div>
+
         </div>
       )}
     </div>
