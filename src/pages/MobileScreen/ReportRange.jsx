@@ -77,10 +77,12 @@ export default function ReportRange() {
     }));
   }, [range]);
 
-  const categoryChartData = range?.chart_data?.outcome_by_category_per_period || range?.outcome_by_category_per_period;
-  const outcomeTypeChartData = range?.chart_data?.outcome_by_type_per_period || range?.outcome_by_type_per_period;
-  const tagsChartData     = range?.chart_data?.outcome_by_tags_per_period || range?.outcome_by_tags_per_period;
-  const incomeTypeChartData  = range?.chart_data?.income_by_type_per_period || range?.income_by_type_per_period;
+  const categoryChartData     = range?.chart_data?.outcome_by_category_per_period || range?.outcome_by_category_per_period;
+  const outcomeTypeChartData  = range?.chart_data?.outcome_by_type_per_period || range?.outcome_by_type_per_period;
+  const tagsChartData         = range?.chart_data?.outcome_by_tags_per_period || range?.outcome_by_tags_per_period;
+  const outcomePaymentData    = range?.chart_data?.outcome_by_payment_per_period;
+  const incomeTypeChartData   = range?.chart_data?.income_by_type_per_period || range?.income_by_type_per_period;
+  const incomePaymentData     = range?.chart_data?.income_by_payment_per_period;
 
   return (
     <div className="bg-slate-50 min-h-screen pb-6">
@@ -242,7 +244,9 @@ export default function ReportRange() {
                 <PeriodBreakdownCard title="Outcome by Category" chartData={categoryChartData} colors={COLORS} />
                 <PeriodBreakdownCard title="Outcome by Type" chartData={outcomeTypeChartData} colors={COLORS} />
                 <PeriodBreakdownCard title="Outcome by Detail Tag" chartData={tagsChartData} colors={COLORS} />
+                <PeriodBreakdownCard title="Outcome by Payment" chartData={outcomePaymentData} colors={['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']} />
                 <PeriodBreakdownCard title="Income by Type" chartData={incomeTypeChartData} colors={COLORS} />
+                <PeriodBreakdownCard title="Income by Payment" chartData={incomePaymentData} colors={['#10b981', '#34d399', '#059669', '#6ee7b7', '#a7f3d0']} />
               </div>
             </div>
           </>

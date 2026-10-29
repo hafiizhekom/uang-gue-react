@@ -300,7 +300,9 @@ export default function ReportMonthly() {
             <DailyBreakdownCard title="Outcome by Category / Day" chartData={report.daily_chart_data.expense_breakdown.by_category} colors={COLORS} />
             <DailyBreakdownCard title="Outcome by Type / Day" chartData={report.daily_chart_data.expense_breakdown.by_type} colors={COLORS} />
             <DailyBreakdownCard title="Outcome by Tags / Day" chartData={report.daily_chart_data.expense_breakdown.by_tags} colors={COLORS} />
+            <DailyBreakdownCard title="Outcome by Payment / Day" chartData={report.daily_chart_data.expense_breakdown.by_payment} colors={['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']} />
             <DailyBreakdownCard title="Income by Type / Day" chartData={report.daily_chart_data.income_breakdown.by_type} colors={['#10b981', '#34d399', '#059669']} />
+            <DailyBreakdownCard title="Income by Payment / Day" chartData={report.daily_chart_data.income_breakdown.by_payment} colors={['#10b981', '#34d399', '#059669', '#6ee7b7', '#a7f3d0']} />
           </div>
         </>
       ) : null}
