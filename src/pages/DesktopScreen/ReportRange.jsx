@@ -241,7 +241,9 @@ export default function ReportRange() {
             <PeriodBreakdownCard title="Outcome by Category / Period" chartData={range.chart_data?.outcome_by_category_per_period} colors={COLORS} />
             <PeriodBreakdownCard title="Outcome by Type / Period" chartData={range.chart_data?.outcome_by_type_per_period} colors={COLORS} />
             <PeriodBreakdownCard title="Outcome by Detail Tag / Period" chartData={range.chart_data?.outcome_by_tags_per_period} colors={COLORS} />
+            <PeriodBreakdownCard title="Outcome by Payment / Period" chartData={range.chart_data?.outcome_by_payment_per_period} colors={['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']} />
             <PeriodBreakdownCard title="Income by Type / Period" chartData={range.chart_data?.income_by_type_per_period} colors={COLORS} />
+            <PeriodBreakdownCard title="Income by Payment / Period" chartData={range.chart_data?.income_by_payment_per_period} colors={['#10b981', '#34d399', '#059669', '#6ee7b7', '#a7f3d0']} />
           </div>
         </>
       ) : null}
