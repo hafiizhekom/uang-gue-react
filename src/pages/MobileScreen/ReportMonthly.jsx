@@ -8,11 +8,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4'];
 
 const formatShort = (val) => {
-  if (!val) return 'Rp0';
-  if (val >= 1_000_000_000) return `Rp${(val / 1_000_000_000).toFixed(1)}M`;
-  if (val >= 1_000_000) return `Rp${(val / 1_000_000).toFixed(1)}jt`;
-  if (val >= 1_000) return `Rp${(val / 1_000).toFixed(0)}rb`;
-  return `Rp${val}`;
+  if (!val && val !== 0) return 'Rp0';
+  const isNeg = val < 0;
+  const abs = Math.abs(val);
+  let str = '';
+  if (abs >= 1_000_000_000) str = `Rp${(abs / 1_000_000_000).toFixed(1)}M`;
+  else if (abs >= 1_000_000) str = `Rp${(abs / 1_000_000).toFixed(1)}jt`;
+  else if (abs >= 1_000) str = `Rp${(abs / 1_000).toFixed(0)}rb`;
+  else str = `Rp${abs}`;
+  return isNeg ? `-${str}` : str;
 };
 
 const formatIDR = (val) => new Intl.NumberFormat('id-ID', {
@@ -150,18 +154,8 @@ export default function ReportMonthly() {
           </div>
         ) : report ? (
           <>
-            {/* STATS ROW */}
-            <div className="grid grid-cols-3 gap-2">
-              <StatPill label="Income" value={formatShort(report.balance.total_income)} color="text-emerald-500" />
-              <StatPill label="Outcome" value={formatShort(report.balance.total_outcome)} color="text-rose-500" />
-              <StatPill label="Net (with Opening Balance)" value={formatShort(report.balance.net_savings)} color="text-indigo-500" />
-            </div>
-            <div className="bg-white border border-slate-100 rounded-2xl p-3 shadow-sm flex justify-between items-center">
-              <p className="text-[8px] font-black uppercase tracking-widest text-slate-400">Transactions</p>
-              <p className="text-sm font-black tracking-tight text-slate-700">
-                {Number(report.balance.count_transactions || 0).toLocaleString('id-ID')}
-              </p>
-            </div>
+            {/* FINANCIAL FLOW SUMMARY */}
+            <FinancialFlowCardMobile balance={report.balance} formatShort={formatShort} />
 
             {/* DAILY BAR CHART */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-3">
@@ -182,9 +176,9 @@ export default function ReportMonthly() {
                 <DailyBreakdownCard title="Outcome by Category" chartData={report.daily_chart_data.expense_breakdown.by_category} colors={COLORS} />
                 <DailyBreakdownCard title="Outcome by Type" chartData={report.daily_chart_data.expense_breakdown.by_type} colors={COLORS} />
                 <DailyBreakdownCard title="Outcome by Tags" chartData={report.daily_chart_data.expense_breakdown.by_tags} colors={COLORS} />
-                <DailyBreakdownCard title="Outcome by Payment" chartData={report.daily_chart_data.expense_breakdown.by_payment} colors={['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']} />
+                <DailyBreakdownCard title="Outcome by Payment" chartData={report.daily_chart_data.expense_breakdown.by_payment} colors={['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6']} />
                 <DailyBreakdownCard title="Income by Type" chartData={report.daily_chart_data.income_breakdown.by_type} colors={['#10b981', '#34d399', '#059669']} />
-                <DailyBreakdownCard title="Income by Payment" chartData={report.daily_chart_data.income_breakdown.by_payment} colors={['#10b981', '#34d399', '#059669', '#6ee7b7', '#a7f3d0']} />
+                <DailyBreakdownCard title="Income by Payment" chartData={report.daily_chart_data.income_breakdown.by_payment} colors={['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6']} />
               </div>
             </div>
           </>
@@ -544,6 +538,109 @@ function DailyBreakdownCard({ title, chartData, colors }) {
           )}
         </>
       )}
+    </div>
+  );
+}
+
+function FinancialFlowCardMobile({ balance, formatShort }) {
+  const surplus = balance.period_surplus_deficit;
+  const isDeficit = balance.is_deficit_period;
+  const isNetPositive = balance.net_savings >= 0;
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-100 p-4 shadow-sm space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 border-b border-slate-50">
+        <div>
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Financial Summary</p>
+          <h3 className="text-sm font-black text-slate-900 tracking-tight">Financial Flow</h3>
+        </div>
+        <div className={`px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+          isDeficit
+            ? 'bg-rose-50 text-rose-600 border-rose-200'
+            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+        }`}>
+          {isDeficit ? '▼ Deficit' : '▲ Surplus'}
+        </div>
+      </div>
+
+      {/* Formula Hint */}
+      <div className="bg-slate-50 text-center py-1 px-2 rounded-lg text-[9px] font-extrabold text-slate-500">
+        (Income − Outcome) = Surplus + Opening = Net Savings
+      </div>
+
+      {/* Step 1: Income - Outcome = Surplus */}
+      <div className="bg-slate-50/70 p-3 rounded-2xl border border-slate-100 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[8px] font-black uppercase tracking-wider text-slate-400">1. Period Cashflow</span>
+          <span className="text-[8px] font-bold text-slate-400">Income − Outcome</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <div className="bg-white p-2.5 rounded-xl border border-emerald-100/80 shadow-2xs">
+            <p className="text-[8px] font-black uppercase tracking-wider text-emerald-600">Total Income</p>
+            <p className="text-sm font-black text-emerald-700 tracking-tight mt-0.5">{formatShort(balance.total_income)}</p>
+          </div>
+          <div className="bg-white p-2.5 rounded-xl border border-rose-100/80 shadow-2xs">
+            <p className="text-[8px] font-black uppercase tracking-wider text-rose-500">Total Outcome</p>
+            <p className="text-sm font-black text-rose-600 tracking-tight mt-0.5">{formatShort(balance.total_outcome)}</p>
+          </div>
+        </div>
+
+        <div className={`p-2.5 rounded-xl flex items-center justify-between border ${
+          isDeficit
+            ? 'bg-rose-50 border-rose-200 text-rose-700'
+            : 'bg-amber-50 border-amber-200 text-amber-800'
+        }`}>
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs font-black">=</span>
+            <span className="text-[9px] font-black uppercase tracking-wider">
+              {isDeficit ? 'Period Deficit' : 'Period Surplus'}
+            </span>
+          </div>
+          <span className="text-sm font-black tracking-tight">
+            {isDeficit ? '−' : '+'}{formatShort(Math.abs(surplus))}
+          </span>
+        </div>
+      </div>
+
+      {/* Step 2: Surplus + Opening Balance = Net Savings */}
+      <div className="bg-indigo-50/40 p-3 rounded-2xl border border-indigo-100/70 space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[8px] font-black uppercase tracking-wider text-indigo-500">2. Balance Accumulation</span>
+          <span className="text-[8px] font-bold text-indigo-400">Surplus + Opening</span>
+        </div>
+
+        <div className="flex items-center justify-between bg-white/80 p-2.5 rounded-xl border border-indigo-100 shadow-2xs">
+          <span className="text-[10px] font-bold text-slate-500">Opening Balance</span>
+          <span className="text-xs font-black text-slate-800">{formatShort(balance.opening_balance)}</span>
+        </div>
+
+        <div className={`p-3 rounded-xl flex items-center justify-between border ${
+          isNetPositive
+            ? 'bg-indigo-600 text-white border-indigo-700'
+            : 'bg-rose-600 text-white border-rose-700'
+        }`}>
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-black opacity-80">=</span>
+              <p className="text-[9px] font-black uppercase tracking-wider opacity-90">Net Savings</p>
+            </div>
+            <p className="text-[8px] font-medium opacity-75">Period Closing Balance</p>
+          </div>
+          <p className="text-base font-black tracking-tight">
+            {formatShort(balance.net_savings)}
+          </p>
+        </div>
+      </div>
+
+      {/* Footer Transactions */}
+      <div className="flex justify-between items-center px-1 text-[10px] text-slate-400 font-bold">
+        <span>Transactions this period</span>
+        <span className="font-black text-slate-700">
+          {Number(balance.count_transactions || 0).toLocaleString('en-US')} transactions
+        </span>
+      </div>
     </div>
   );
 }

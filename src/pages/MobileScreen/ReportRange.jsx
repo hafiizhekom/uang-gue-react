@@ -118,12 +118,8 @@ export default function ReportRange() {
           </div>
         ) : range ? (
           <>
-            {/* SUMMARY */}
-            <div className="grid grid-cols-3 gap-2">
-              <StatPill label="Income" value={formatShort(range.summary.total_income)} color="text-emerald-500" />
-              <StatPill label="Outcome" value={formatShort(range.summary.total_outcome)} color="text-rose-500" />
-              <StatPill label="Net" value={formatShort(range.summary.net_savings)} color="text-indigo-500" />
-            </div>
+            {/* CASHFLOW SUMMARY */}
+            <RangeCashflowCardMobile summary={range.summary} formatShort={formatShort} />
 
             {/* BALANCE GROWTH — starting balance vs ending balance across the range */}
             <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4 space-y-2.5">
@@ -244,9 +240,9 @@ export default function ReportRange() {
                 <PeriodBreakdownCard title="Outcome by Category" chartData={categoryChartData} colors={COLORS} />
                 <PeriodBreakdownCard title="Outcome by Type" chartData={outcomeTypeChartData} colors={COLORS} />
                 <PeriodBreakdownCard title="Outcome by Detail Tag" chartData={tagsChartData} colors={COLORS} />
-                <PeriodBreakdownCard title="Outcome by Payment" chartData={outcomePaymentData} colors={['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']} />
+                <PeriodBreakdownCard title="Outcome by Payment" chartData={outcomePaymentData} colors={['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6']} />
                 <PeriodBreakdownCard title="Income by Type" chartData={incomeTypeChartData} colors={COLORS} />
-                <PeriodBreakdownCard title="Income by Payment" chartData={incomePaymentData} colors={['#10b981', '#34d399', '#059669', '#6ee7b7', '#a7f3d0']} />
+                <PeriodBreakdownCard title="Income by Payment" chartData={incomePaymentData} colors={['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6']} />
               </div>
             </div>
           </>
@@ -299,6 +295,83 @@ export default function ReportRange() {
 }
 
 // ─── Helper Components ────────────────────────────────────────────────────────
+
+function RangeCashflowCardMobile({ summary, formatShort }) {
+  const isNetPositive = summary.net_savings >= 0;
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-100 p-4 shadow-sm space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2 border-b border-slate-50">
+        <div>
+          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Range Summary</p>
+          <h3 className="text-sm font-black text-slate-900 tracking-tight">Cashflow Accumulation</h3>
+        </div>
+        <span className="text-[10px] font-extrabold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full">
+          {summary.total_periods} Periods
+        </span>
+      </div>
+
+      {/* Formula tag */}
+      <div className="bg-slate-50 text-center py-1 px-2 rounded-lg text-[9px] font-extrabold text-slate-500">
+        Total Income − Total Outcome = Net Savings (Excl. Opening Balance)
+      </div>
+
+      {/* Income & Outcome Grid */}
+      <div className="grid grid-cols-2 gap-2">
+        <div className="bg-emerald-50/70 border border-emerald-100 p-3 rounded-2xl">
+          <div className="flex items-center justify-between mb-0.5">
+            <p className="text-[8px] font-black uppercase tracking-wider text-emerald-600">Total Income</p>
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+          </div>
+          <p className="text-base font-black text-emerald-700 tracking-tight">{formatShort(summary.total_income)}</p>
+          <p className="text-[8px] font-medium text-emerald-600/70 mt-0.5">Total received</p>
+        </div>
+
+        <div className="bg-rose-50/70 border border-rose-100 p-3 rounded-2xl">
+          <div className="flex items-center justify-between mb-0.5">
+            <p className="text-[8px] font-black uppercase tracking-wider text-rose-500">Total Outcome</p>
+            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+          </div>
+          <p className="text-base font-black text-rose-600 tracking-tight">{formatShort(summary.total_outcome)}</p>
+          <p className="text-[8px] font-medium text-rose-500/70 mt-0.5">Total spent</p>
+        </div>
+      </div>
+
+      {/* Net Savings Result Card */}
+      <div className={`p-3.5 rounded-2xl border ${
+        isNetPositive
+          ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/60 border-indigo-200'
+          : 'bg-gradient-to-br from-rose-50 to-rose-100/60 border-rose-200'
+      }`}>
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs font-black text-slate-400">=</span>
+              <p className={`text-[10px] font-black uppercase tracking-wider ${
+                isNetPositive ? 'text-indigo-700' : 'text-rose-700'
+              }`}>
+                Cumulative Net Savings
+              </p>
+            </div>
+            <p className={`text-lg font-black tracking-tight mt-0.5 ${
+              isNetPositive ? 'text-indigo-700' : 'text-rose-600'
+            }`}>
+              {isNetPositive ? '+' : ''}{formatShort(summary.net_savings)}
+            </p>
+          </div>
+          <span className="text-[8px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/90 border border-indigo-200 text-indigo-700 shadow-2xs">
+            Excl. Opening Balance
+          </span>
+        </div>
+        <div className="mt-2 pt-2 border-t border-indigo-200/40 flex items-center justify-between text-[9px] text-slate-500 font-medium">
+          <span>Net operating cashflow</span>
+          <span>Avg: <strong className="text-slate-800">{formatShort(summary.avg_outcome_per_period)}</strong>/period</span>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function StatPill({ label, value, color }) {
   return (

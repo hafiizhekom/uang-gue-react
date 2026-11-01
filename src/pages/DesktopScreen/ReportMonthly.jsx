@@ -201,17 +201,8 @@ export default function ReportMonthly() {
         </div>
       ) : report ? (
         <>
-          {/* STAT CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <StatCard title="Total Income" value={report.balance.total_income} color="text-emerald-600 font-extrabold" />
-            <StatCard title="Total Outcome" value={report.balance.total_outcome} color="text-rose-600 font-extrabold" />
-            <StatCard
-              title="Net Savings (with Opening Balance)"
-              value={report.balance.net_savings}
-              color={report.balance.net_savings >= 0 ? "text-indigo-600 font-extrabold" : "text-rose-600 font-extrabold"}
-            />
-            <StatCard title="Transactions" value={report.balance.count_transactions} color="text-slate-900 font-extrabold" isCount />
-          </div>
+          {/* FINANCIAL FLOW SUMMARY */}
+          <FinancialFlowCard balance={report.balance} />
 
           {/* DAILY TREND CHART (income vs outcome) */}
           <div className="bg-white p-10 rounded-[3rem] border border-slate-100 shadow-sm space-y-8">
@@ -300,9 +291,9 @@ export default function ReportMonthly() {
             <DailyBreakdownCard title="Outcome by Category / Day" chartData={report.daily_chart_data.expense_breakdown.by_category} colors={COLORS} />
             <DailyBreakdownCard title="Outcome by Type / Day" chartData={report.daily_chart_data.expense_breakdown.by_type} colors={COLORS} />
             <DailyBreakdownCard title="Outcome by Tags / Day" chartData={report.daily_chart_data.expense_breakdown.by_tags} colors={COLORS} />
-            <DailyBreakdownCard title="Outcome by Payment / Day" chartData={report.daily_chart_data.expense_breakdown.by_payment} colors={['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']} />
+            <DailyBreakdownCard title="Outcome by Payment / Day" chartData={report.daily_chart_data.expense_breakdown.by_payment} colors={['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6']} />
             <DailyBreakdownCard title="Income by Type / Day" chartData={report.daily_chart_data.income_breakdown.by_type} colors={['#10b981', '#34d399', '#059669']} />
-            <DailyBreakdownCard title="Income by Payment / Day" chartData={report.daily_chart_data.income_breakdown.by_payment} colors={['#10b981', '#34d399', '#059669', '#6ee7b7', '#a7f3d0']} />
+            <DailyBreakdownCard title="Income by Payment / Day" chartData={report.daily_chart_data.income_breakdown.by_payment} colors={['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6']} />
           </div>
         </>
       ) : null}
@@ -311,6 +302,151 @@ export default function ReportMonthly() {
 }
 
 // ─── Helper Components ───────────────────────────────────────────────────────
+
+function FinancialFlowCard({ balance }) {
+  const surplus = balance.period_surplus_deficit;
+  const isDeficit = balance.is_deficit_period;
+  const isNetPositive = balance.net_savings >= 0;
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-8 pt-7 pb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-50">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Financial Summary</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+              (Income − Outcome) = Surplus + Opening Balance = Net Savings
+            </span>
+          </div>
+          <h3 className="text-xl font-black tracking-tight text-slate-900 mt-1">Period Financial Flow</h3>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className={`px-4 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider border ${
+            isDeficit
+              ? 'bg-rose-50 text-rose-600 border-rose-200'
+              : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+          }`}>
+            {isDeficit ? '▼ Deficit Period' : '▲ Surplus Period'}
+          </div>
+          <div className="bg-slate-100 px-3.5 py-1.5 rounded-full text-[11px] font-extrabold text-slate-700">
+            {Number(balance.count_transactions || 0).toLocaleString('en-US')} Transactions
+          </div>
+        </div>
+      </div>
+
+      {/* Formula Flow Row */}
+      <div className="p-8">
+        <div className="flex items-stretch gap-1">
+
+          {/* Income */}
+          <div className="flex-1 min-w-0 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-4.5 hover:shadow-xs transition-shadow">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-emerald-700">1. Total Income</p>
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            </div>
+            <p className="text-lg xl:text-xl font-black tracking-tight text-emerald-700 truncate" title={formatIDR(balance.total_income)}>
+              {formatIDR(balance.total_income)}
+            </p>
+            <p className="text-[10px] font-bold text-emerald-600/70 mt-1 truncate">Total received this period</p>
+          </div>
+
+          {/* Operator: minus */}
+          <div className="flex flex-col items-center justify-center px-2 shrink-0">
+            <span className="text-2xl font-black text-slate-400">−</span>
+          </div>
+
+          {/* Outcome */}
+          <div className="flex-1 min-w-0 bg-rose-50/70 border border-rose-200/80 rounded-2xl p-4.5 hover:shadow-xs transition-shadow">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-rose-600">2. Total Outcome</p>
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+            </div>
+            <p className="text-lg xl:text-xl font-black tracking-tight text-rose-600 truncate" title={formatIDR(balance.total_outcome)}>
+              {formatIDR(balance.total_outcome)}
+            </p>
+            <p className="text-[10px] font-bold text-rose-500/70 mt-1 truncate">Total spent this period</p>
+          </div>
+
+          {/* Operator: equals */}
+          <div className="flex flex-col items-center justify-center px-2 shrink-0">
+            <span className="text-2xl font-black text-slate-400">=</span>
+          </div>
+
+          {/* Surplus / Deficit */}
+          <div className={`flex-1 min-w-0 rounded-2xl p-4.5 border hover:shadow-xs transition-shadow ${
+            isDeficit
+              ? 'bg-rose-50/90 border-rose-200'
+              : 'bg-amber-50/90 border-amber-200'
+          }`}>
+            <div className="flex items-center justify-between mb-1">
+              <p className={`text-[9px] font-black uppercase tracking-widest ${
+                isDeficit ? 'text-rose-600' : 'text-amber-700'
+              }`}>
+                3. {isDeficit ? 'Deficit' : 'Surplus'}
+              </p>
+              <span className={`w-2 h-2 rounded-full ${isDeficit ? 'bg-rose-500' : 'bg-amber-500'}`} />
+            </div>
+            <p className={`text-lg xl:text-xl font-black tracking-tight truncate ${
+              isDeficit ? 'text-rose-600' : 'text-amber-700'
+            }`} title={formatIDR(surplus)}>
+              {isDeficit ? '−' : '+'}{formatIDR(Math.abs(surplus))}
+            </p>
+            <p className={`text-[10px] font-bold mt-1 truncate ${
+              isDeficit ? 'text-rose-500/80' : 'text-amber-600/80'
+            }`}>Income − Outcome</p>
+          </div>
+
+          {/* Operator: plus */}
+          <div className="flex flex-col items-center justify-center px-2 shrink-0">
+            <span className="text-2xl font-black text-slate-400">+</span>
+          </div>
+
+          {/* Opening Balance */}
+          <div className="flex-1 min-w-0 bg-slate-50 border border-slate-200/80 rounded-2xl p-4.5 hover:shadow-xs transition-shadow">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500">4. Opening Balance</p>
+              <span className="w-2 h-2 rounded-full bg-slate-400" />
+            </div>
+            <p className="text-lg xl:text-xl font-black tracking-tight text-slate-800 truncate" title={formatIDR(balance.opening_balance)}>
+              {formatIDR(balance.opening_balance)}
+            </p>
+            <p className="text-[10px] font-bold text-slate-400 mt-1 truncate">Starting period balance</p>
+          </div>
+
+          {/* Operator: equals */}
+          <div className="flex flex-col items-center justify-center px-2 shrink-0">
+            <span className="text-2xl font-black text-indigo-400">=</span>
+          </div>
+
+          {/* Net Savings / Closing Balance */}
+          <div className={`flex-[1.1] min-w-0 rounded-2xl p-4.5 border-2 shadow-xs hover:shadow-md transition-shadow ${
+            isNetPositive
+              ? 'bg-indigo-50 border-indigo-300'
+              : 'bg-rose-50 border-rose-300'
+          }`}>
+            <div className="flex items-center justify-between mb-1">
+              <p className={`text-[9px] font-black uppercase tracking-widest ${
+                isNetPositive ? 'text-indigo-600' : 'text-rose-600'
+              }`}>5. Net Savings</p>
+              <span className={`w-2 h-2 rounded-full ${isNetPositive ? 'bg-indigo-600 animate-pulse' : 'bg-rose-600'}`} />
+            </div>
+            <p className={`text-lg xl:text-xl font-black tracking-tight truncate ${
+              isNetPositive ? 'text-indigo-700' : 'text-rose-600'
+            }`} title={formatIDR(balance.net_savings)}>
+              {formatIDR(balance.net_savings)}
+            </p>
+            <p className={`text-[10px] font-bold mt-1 truncate ${
+              isNetPositive ? 'text-indigo-500/80' : 'text-rose-500/80'
+            }`}>Closing Balance</p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function StatCard({ title, value, color, isCount = false }) {
   return (

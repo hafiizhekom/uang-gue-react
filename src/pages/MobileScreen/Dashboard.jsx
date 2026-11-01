@@ -6,6 +6,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4'];
+const PAYMENT_COLORS = ['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6'];
 
 const formatIDR = (val) => new Intl.NumberFormat('id-ID', {
   style: 'currency', currency: 'IDR', minimumFractionDigits: 0
@@ -36,7 +37,9 @@ export default function Dashboard() {
         raw.last_period_chart_data.expense_breakdown.by_category = fmt(raw.last_period_chart_data.expense_breakdown.by_category);
         raw.last_period_chart_data.expense_breakdown.by_type     = fmt(raw.last_period_chart_data.expense_breakdown.by_type);
         raw.last_period_chart_data.expense_breakdown.by_tags     = fmt(raw.last_period_chart_data.expense_breakdown.by_tags);
+        raw.last_period_chart_data.expense_breakdown.by_payment  = fmt(raw.last_period_chart_data.expense_breakdown.by_payment);
         raw.last_period_chart_data.income_breakdown.by_type      = fmt(raw.last_period_chart_data.income_breakdown.by_type);
+        raw.last_period_chart_data.income_breakdown.by_payment   = fmt(raw.last_period_chart_data.income_breakdown.by_payment);
         setData(raw);
       } catch (err) {
         if (err.response?.data?.status === 'Error') setErrorInfo(err.response.data.message);
@@ -131,9 +134,11 @@ export default function Dashboard() {
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-3">Breakdown</p>
           <div className="space-y-3">
             <BreakdownCard title="Outcome by Category" data={charts.expense_breakdown.by_category} colors={COLORS} />
-            <BreakdownCard title="Outcome by Type"     data={charts.expense_breakdown.by_type}     colors={COLORS} />
             <BreakdownCard title="Outcome by Tags"     data={charts.expense_breakdown.by_tags}     colors={COLORS} />
+            <BreakdownCard title="Outcome by Type"     data={charts.expense_breakdown.by_type}     colors={COLORS} />
             <BreakdownCard title="Income by Type"      data={charts.income_breakdown.by_type}      colors={['#10b981','#34d399','#059669']} />
+            <BreakdownCard title="Outcome by Payment"  data={charts.expense_breakdown.by_payment}  colors={PAYMENT_COLORS} />
+            <BreakdownCard title="Income by Payment"   data={charts.income_breakdown.by_payment}   colors={PAYMENT_COLORS} />
           </div>
         </div>
       </div>
@@ -141,7 +146,7 @@ export default function Dashboard() {
   );
 }
 
-// ─── Helper Components ────────────────────────────────────────────────────────
+/* ─── Helper Components ──────────────────────────────────────────────────── */
 
 function DailyBarChart({ data, formatShort, formatIDR }) {
   const [viewMode, setViewMode] = useState('all');

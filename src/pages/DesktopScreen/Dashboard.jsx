@@ -14,6 +14,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
 
   const COLORS = ['#10b981', '#6366f1', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4'];
+  const PAYMENT_COLORS = ['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6'];
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -36,7 +37,9 @@ export default function Dashboard() {
         rawData.last_period_chart_data.expense_breakdown.by_category = formatBreakdown(rawData.last_period_chart_data.expense_breakdown.by_category);
         rawData.last_period_chart_data.expense_breakdown.by_type = formatBreakdown(rawData.last_period_chart_data.expense_breakdown.by_type);
         rawData.last_period_chart_data.expense_breakdown.by_tags = formatBreakdown(rawData.last_period_chart_data.expense_breakdown.by_tags);
+        rawData.last_period_chart_data.expense_breakdown.by_payment = formatBreakdown(rawData.last_period_chart_data.expense_breakdown.by_payment);
         rawData.last_period_chart_data.income_breakdown.by_type = formatBreakdown(rawData.last_period_chart_data.income_breakdown.by_type);
+        rawData.last_period_chart_data.income_breakdown.by_payment = formatBreakdown(rawData.last_period_chart_data.income_breakdown.by_payment);
 
         setData(rawData);
       } catch (err) {
@@ -274,17 +277,19 @@ export default function Dashboard() {
       <DailyCashflowTable data={processedTrend} formatIDR={formatIDR} />
 
       {/* DONUT CHARTS GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <DonutCard title="Outcome Category" data={charts.expense_breakdown.by_category} colors={COLORS} formatIDR={formatIDR} />
-        <DonutCard title="Outcome Type" data={charts.expense_breakdown.by_type} colors={COLORS} formatIDR={formatIDR} />
         <DonutCard title="Outcome Tags" data={charts.expense_breakdown.by_tags} colors={COLORS} formatIDR={formatIDR} />
+        <DonutCard title="Outcome Type" data={charts.expense_breakdown.by_type} colors={COLORS} formatIDR={formatIDR} />
         <DonutCard title="Income Type" data={charts.income_breakdown.by_type} colors={['#10b981', '#34d399', '#059669']} formatIDR={formatIDR} />
+        <DonutCard title="Outcome Payment" data={charts.expense_breakdown.by_payment} colors={PAYMENT_COLORS} formatIDR={formatIDR} />
+        <DonutCard title="Income Payment" data={charts.income_breakdown.by_payment} colors={PAYMENT_COLORS} formatIDR={formatIDR} />
       </div>
     </div>
   );
 }
 
-// --- DAILY CASHFLOW TABLE ---
+/* --- DAILY CASHFLOW TABLE --- */
 function DailyCashflowTable({ data, formatIDR }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState('asc');
@@ -433,7 +438,7 @@ function DailyCashflowTable({ data, formatIDR }) {
   );
 }
 
-// --- HELPER COMPONENTS ---
+/* --- HELPER COMPONENTS --- */
 function StatCard({ title, value, color, isDark = false }) {
     return (
         <div className={`${isDark ? 'bg-slate-900 text-white' : 'bg-white text-slate-900 border border-slate-100'} p-8 rounded-[2.5rem] shadow-sm`}>

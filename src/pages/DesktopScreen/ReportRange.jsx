@@ -116,18 +116,8 @@ export default function ReportRange() {
         </div>
       ) : range ? (
         <>
-          {/* SUMMARY CARDS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            <StatCard title="Total Periods" value={range.summary.total_periods} isCount />
-            <StatCard title="Total Income" value={range.summary.total_income} color="text-emerald-600 font-extrabold" />
-            <StatCard title="Total Outcome" value={range.summary.total_outcome} color="text-rose-600 font-extrabold" />
-            <StatCard
-              title="Net Savings"
-              value={range.summary.net_savings}
-              color={range.summary.net_savings >= 0 ? "text-indigo-600 font-extrabold" : "text-rose-600 font-extrabold"}
-            />
-            <StatCard title="Avg Outcome / Period" value={range.summary.avg_outcome_per_period} color="text-slate-900 font-extrabold" />
-          </div>
+          {/* CASHFLOW SUMMARY FLOW */}
+          <RangeCashflowCard summary={range.summary} formatIDR={formatIDR} />
 
           {/* BALANCE GROWTH — starting vs ending range balance */}
           <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
@@ -241,9 +231,9 @@ export default function ReportRange() {
             <PeriodBreakdownCard title="Outcome by Category / Period" chartData={range.chart_data?.outcome_by_category_per_period} colors={COLORS} />
             <PeriodBreakdownCard title="Outcome by Type / Period" chartData={range.chart_data?.outcome_by_type_per_period} colors={COLORS} />
             <PeriodBreakdownCard title="Outcome by Detail Tag / Period" chartData={range.chart_data?.outcome_by_tags_per_period} colors={COLORS} />
-            <PeriodBreakdownCard title="Outcome by Payment / Period" chartData={range.chart_data?.outcome_by_payment_per_period} colors={['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe']} />
+            <PeriodBreakdownCard title="Outcome by Payment / Period" chartData={range.chart_data?.outcome_by_payment_per_period} colors={['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6']} />
             <PeriodBreakdownCard title="Income by Type / Period" chartData={range.chart_data?.income_by_type_per_period} colors={COLORS} />
-            <PeriodBreakdownCard title="Income by Payment / Period" chartData={range.chart_data?.income_by_payment_per_period} colors={['#10b981', '#34d399', '#059669', '#6ee7b7', '#a7f3d0']} />
+            <PeriodBreakdownCard title="Income by Payment / Period" chartData={range.chart_data?.income_by_payment_per_period} colors={['#6366f1', '#f43f5e', '#f59e0b', '#06b6d4', '#10b981', '#ec4899', '#3b82f6', '#a855f7', '#14b8a6']} />
           </div>
         </>
       ) : null}
@@ -252,6 +242,105 @@ export default function ReportRange() {
 }
 
 // ─── Helper Components ───────────────────────────────────────────────────────
+
+function RangeCashflowCard({ summary, formatIDR }) {
+  const isNetPositive = summary.net_savings >= 0;
+
+  return (
+    <div className="bg-white border border-slate-100 rounded-[2.5rem] shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="px-8 pt-7 pb-4 flex flex-wrap items-center justify-between gap-3 border-b border-slate-50">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Range Summary</span>
+            <span className="text-slate-300">•</span>
+            <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+              Total Income − Total Outcome = Net Savings (Excl. Opening Balance)
+            </span>
+          </div>
+          <h3 className="text-xl font-black tracking-tight text-slate-900 mt-1">Range Cashflow Accumulation</h3>
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="bg-slate-100 px-3.5 py-1.5 rounded-full text-[11px] font-extrabold text-slate-700">
+            {summary.total_periods} Periods
+          </div>
+          <div className="bg-slate-50 border border-slate-200/80 px-3.5 py-1.5 rounded-full text-[11px] font-extrabold text-slate-600">
+            Avg Outcome: <span className="text-rose-600 font-black">{formatIDR(summary.avg_outcome_per_period)}</span> / period
+          </div>
+        </div>
+      </div>
+
+      {/* 3 Main Flow Columns */}
+      <div className="p-8">
+        <div className="flex items-stretch gap-2">
+
+          {/* Total Income */}
+          <div className="flex-1 min-w-0 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-5 hover:shadow-xs transition-shadow">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[9px] font-black uppercase tracking-widest text-emerald-700">1. Total Income</p>
+              <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            </div>
+            <p className="text-xl xl:text-2xl font-black tracking-tight text-emerald-700 truncate" title={formatIDR(summary.total_income)}>
+              {formatIDR(summary.total_income)}
+            </p>
+            <p className="text-[10px] font-bold text-emerald-600/70 mt-1 truncate">Cumulative total received</p>
+          </div>
+
+          {/* Operator: minus */}
+          <div className="flex flex-col items-center justify-center px-3 shrink-0">
+            <span className="text-3xl font-black text-slate-400">−</span>
+          </div>
+
+          {/* Total Outcome */}
+          <div className="flex-1 min-w-0 bg-rose-50/70 border border-rose-200/80 rounded-2xl p-5 hover:shadow-xs transition-shadow">
+            <div className="flex items-center justify-between mb-1.5">
+              <p className="text-[9px] font-black uppercase tracking-widest text-rose-600">2. Total Outcome</p>
+              <span className="w-2 h-2 rounded-full bg-rose-500" />
+            </div>
+            <p className="text-xl xl:text-2xl font-black tracking-tight text-rose-600 truncate" title={formatIDR(summary.total_outcome)}>
+              {formatIDR(summary.total_outcome)}
+            </p>
+            <p className="text-[10px] font-bold text-rose-500/70 mt-1 truncate">Cumulative total spent</p>
+          </div>
+
+          {/* Operator: equals */}
+          <div className="flex flex-col items-center justify-center px-3 shrink-0">
+            <span className="text-3xl font-black text-indigo-400">=</span>
+          </div>
+
+          {/* Net Savings (Exclude Start/Opening Balance) */}
+          <div className={`flex-[1.2] min-w-0 rounded-2xl p-5 border-2 shadow-xs hover:shadow-md transition-shadow ${
+            isNetPositive
+              ? 'bg-gradient-to-br from-indigo-50 to-indigo-100/50 border-indigo-300'
+              : 'bg-gradient-to-br from-rose-50 to-rose-100/50 border-rose-300'
+          }`}>
+            <div className="flex items-center justify-between mb-1.5">
+              <p className={`text-[9px] font-black uppercase tracking-widest ${
+                isNetPositive ? 'text-indigo-600' : 'text-rose-600'
+              }`}>
+                3. Cumulative Net Savings
+              </p>
+              <span className="text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-white/90 border border-indigo-200 text-indigo-700 shadow-2xs">
+                Excl. Opening Balance
+              </span>
+            </div>
+            <p className={`text-xl xl:text-2xl font-black tracking-tight truncate ${
+              isNetPositive ? 'text-indigo-700' : 'text-rose-600'
+            }`} title={formatIDR(summary.net_savings)}>
+              {isNetPositive ? '+' : ''}{formatIDR(summary.net_savings)}
+            </p>
+            <p className={`text-[10px] font-bold mt-1 truncate ${
+              isNetPositive ? 'text-indigo-500/80' : 'text-rose-500/80'
+            }`}>
+              Net operating cashflow (Income − Outcome)
+            </p>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function StatCard({ title, value, color = 'text-slate-900 font-extrabold', isCount = false }) {
   return (
