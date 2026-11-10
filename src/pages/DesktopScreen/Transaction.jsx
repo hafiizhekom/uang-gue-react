@@ -19,6 +19,18 @@ export default function Transaction() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
 
+    // Filter States
+    const [showFilters, setShowFilters] = useState(false);
+    const [filterTxType, setFilterTxType] = useState('all'); // 'all', 'income', 'outcome'
+    const [filterPayments, setFilterPayments] = useState([]);
+    const [filterCategories, setFilterCategories] = useState([]);
+    const [filterIncomeTypes, setFilterIncomeTypes] = useState([]);
+    const [filterOutcomeTypes, setFilterOutcomeTypes] = useState([]);
+    const [filterDateFrom, setFilterDateFrom] = useState('');
+    const [filterDateTo, setFilterDateTo] = useState('');
+    const [filterAmountMin, setFilterAmountMin] = useState('');
+    const [filterAmountMax, setFilterAmountMax] = useState('');
+
     // Modal States
     const [showModal, setShowModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -294,8 +306,150 @@ export default function Transaction() {
         return sortableData;
     };
 
-    const sortedIncomes = useMemo(() => sortedData(incomes, incSort), [incomes, incSort]);
-    const sortedOutcomes = useMemo(() => sortedData(outcomes, outSort), [outcomes, outSort]);
+    const toISODateString = (dateStr) => {
+        if (!dateStr) return '';
+        const parts = String(dateStr).split(/[-/]/);
+        if (parts.length === 3) {
+            if (parts[0].length === 4) {
+                return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+            }
+            if (parts[2].length === 4) {
+                return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+        }
+        return String(dateStr);
+    };
+
+    const hasActiveFilters = 
+        filterTxType !== 'all' ||
+        filterPayments.length > 0 ||
+        filterCategories.length > 0 ||
+        filterIncomeTypes.length > 0 ||
+        filterOutcomeTypes.length > 0 ||
+        filterDateFrom ||
+        filterDateTo ||
+        filterAmountMin ||
+        filterAmountMax;
+
+    const handleFilterPayment = (paymentId) => {
+        const pid = String(paymentId);
+        setFilterPayments(prev =>
+            prev.includes(pid) ? prev.filter(id => id !== pid) : [...prev, pid]
+        );
+    };
+
+    const handleFilterCategory = (catId) => {
+        const cid = String(catId);
+        setFilterCategories(prev =>
+            prev.includes(cid) ? prev.filter(id => id !== cid) : [...prev, cid]
+        );
+    };
+
+    const handleFilterIncomeType = (typeId) => {
+        const tid = String(typeId);
+        setFilterIncomeTypes(prev =>
+            prev.includes(tid) ? prev.filter(id => id !== tid) : [...prev, tid]
+        );
+    };
+
+    const handleFilterOutcomeType = (typeId) => {
+        const tid = String(typeId);
+        setFilterOutcomeTypes(prev =>
+            prev.includes(tid) ? prev.filter(id => id !== tid) : [...prev, tid]
+        );
+    };
+
+    const clearAllFilters = () => {
+        setFilterTxType('all');
+        setFilterPayments([]);
+        setFilterCategories([]);
+        setFilterIncomeTypes([]);
+        setFilterOutcomeTypes([]);
+        setFilterDateFrom('');
+        setFilterDateTo('');
+        setFilterAmountMin('');
+        setFilterAmountMax('');
+    };
+
+    // Filtered Incomes
+    const filteredIncomes = useMemo(() => {
+        if (filterTxType === 'outcome') return [];
+        return incomes.filter(row => {
+            if (filterCategories.length > 0) return false;
+            if (filterOutcomeTypes.length > 0) return false;
+
+            if (filterDateFrom || filterDateTo) {
+                const rowDate = toISODateString(row.date);
+                if (filterDateFrom && rowDate < filterDateFrom) return false;
+                if (filterDateTo && rowDate > filterDateTo) return false;
+            }
+
+            if (filterAmountMin || filterAmountMax) {
+                const amount = Number(row.amount) || 0;
+                if (filterAmountMin && amount < Number(filterAmountMin)) return false;
+                if (filterAmountMax && amount > Number(filterAmountMax)) return false;
+            }
+
+            if (filterPayments.length > 0) {
+                const payId = String(row.payment?.id || row.master_payment_id || '');
+                if (!filterPayments.includes(payId)) return false;
+            }
+
+            if (filterIncomeTypes.length > 0) {
+                const typeId = String(row.type?.id || row.master_income_type_id || '');
+                if (!filterIncomeTypes.includes(typeId)) return false;
+            }
+
+            return true;
+        });
+    }, [incomes, filterTxType, filterCategories, filterOutcomeTypes, filterIncomeTypes, filterPayments, filterDateFrom, filterDateTo, filterAmountMin, filterAmountMax]);
+
+    // Filtered Outcomes
+    const filteredOutcomes = useMemo(() => {
+        if (filterTxType === 'income') return [];
+        return outcomes.filter(row => {
+            if (filterIncomeTypes.length > 0) return false;
+
+            if (filterDateFrom || filterDateTo) {
+                const rowDate = toISODateString(row.date);
+                if (filterDateFrom && rowDate < filterDateFrom) return false;
+                if (filterDateTo && rowDate > filterDateTo) return false;
+            }
+
+            if (filterAmountMin || filterAmountMax) {
+                const amount = Number(row.amount) || 0;
+                if (filterAmountMin && amount < Number(filterAmountMin)) return false;
+                if (filterAmountMax && amount > Number(filterAmountMax)) return false;
+            }
+
+            if (filterPayments.length > 0) {
+                const payId = String(row.payment?.id || row.master_payment_id || '');
+                if (!filterPayments.includes(payId)) return false;
+            }
+
+            if (filterCategories.length > 0) {
+                const catId = String(row.category?.id || row.master_outcome_category_id || '');
+                if (!filterCategories.includes(catId)) return false;
+            }
+
+            if (filterOutcomeTypes.length > 0) {
+                const typeId = String(row.type?.id || row.master_outcome_type_id || '');
+                if (!filterOutcomeTypes.includes(typeId)) return false;
+            }
+
+            return true;
+        });
+    }, [outcomes, filterTxType, filterCategories, filterOutcomeTypes, filterIncomeTypes, filterPayments, filterDateFrom, filterDateTo, filterAmountMin, filterAmountMax]);
+
+    const sortedIncomes = useMemo(() => sortedData(filteredIncomes, incSort), [filteredIncomes, incSort]);
+    const sortedOutcomes = useMemo(() => sortedData(filteredOutcomes, outSort), [filteredOutcomes, outSort]);
+
+    const filteredTotalInc = useMemo(() => filteredIncomes.reduce((s, i) => s + (Number(i?.amount) || 0), 0), [filteredIncomes]);
+    const filteredTotalOut = useMemo(
+        () => filteredOutcomes.reduce((s, i) => s + (isOutcomeCounted(i) ? (Number(i?.amount) || 0) : 0), 0),
+        [filteredOutcomes]
+    );
+    const filteredBalance = useMemo(() => filteredTotalInc - filteredTotalOut, [filteredTotalInc, filteredTotalOut]);
 
     const requestSortInc = (key) => {
         setIncSort(prev => ({
@@ -321,147 +475,398 @@ export default function Transaction() {
                     <h2 className="text-4xl font-black tracking-tighter text-slate-900">{activePeriod?.name}</h2>
                     <p className="text-emerald-500 font-bold uppercase text-[12px] tracking-widest mb-6">({formatDateFull(dateLimits.min)} - {formatDateFull(dateLimits.max)})</p>
                     
-                    <div className={`inline-flex flex-col p-5 rounded-[2rem] border shadow-sm ${isSurplus ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
+                    <div className={`inline-flex flex-col p-5 rounded-[2rem] border shadow-sm ${
+                        (hasActiveFilters ? filteredBalance : balance) >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'
+                    }`}>
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">
-                            Period Balance
+                            {hasActiveFilters ? 'Filtered Balance' : 'Period Balance'}
                         </span>
-                        <h4 className={`text-3xl font-black tracking-tighter ${isSurplus ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {formatIDR(balance)}
+                        <h4 className={`text-3xl font-black tracking-tighter ${
+                            (hasActiveFilters ? filteredBalance : balance) >= 0 ? 'text-emerald-600' : 'text-rose-600'
+                        }`}>
+                            {formatIDR(hasActiveFilters ? filteredBalance : balance)}
                         </h4>
                     </div>
                 </div>
                 <button onClick={() => navigate('/transactions')} className="px-6 py-3 bg-white border border-slate-200 rounded-2xl font-black text-[10px] uppercase hover:bg-slate-100 shadow-sm transition-all active:scale-95">← Back to List</button>
             </header>
 
+            {/* Filter Bar */}
+            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                {/* Toggle Header */}
+                <button
+                    onClick={() => setShowFilters(prev => !prev)}
+                    className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors"
+                >
+                    <div className="flex items-center gap-3">
+                        <svg className={`w-4 h-4 text-slate-400 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path d="M19 9l-7 7-7-7" /></svg>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filters</span>
+                        {hasActiveFilters && (
+                            <span className="px-2 py-0.5 bg-slate-900 text-white text-[9px] font-black rounded-lg">
+                                ACTIVE
+                            </span>
+                        )}
+                    </div>
+                    {hasActiveFilters && (
+                        <span className="text-[10px] font-bold text-slate-400">
+                            Showing {filteredIncomes.length + filteredOutcomes.length} of {incomes.length + outcomes.length} transactions
+                        </span>
+                    )}
+                </button>
+
+                {/* Filter Content */}
+                {showFilters && (
+                    <div className="px-5 pb-5 space-y-5 border-t border-slate-100">
+                        {/* Transaction Type */}
+                        <div className="space-y-2 pt-5">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Transaction Type</span>
+                            <div className="flex items-center gap-1.5">
+                                {[
+                                    { id: 'all', label: 'All Transactions' },
+                                    { id: 'income', label: 'Incomes Only' },
+                                    { id: 'outcome', label: 'Outcomes Only' }
+                                ].map(t => (
+                                    <button
+                                        key={t.id}
+                                        onClick={() => setFilterTxType(t.id)}
+                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                            filterTxType === t.id
+                                                ? 'bg-slate-900 text-white shadow-lg scale-105'
+                                                : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+                                        }`}
+                                    >
+                                        {t.label}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Date Range & Amount Range */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Date Range */}
+                            <div className="space-y-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date Range</span>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="date"
+                                        min={dateLimits.min}
+                                        max={dateLimits.max}
+                                        value={filterDateFrom}
+                                        onChange={(e) => setFilterDateFrom(e.target.value)}
+                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 px-3 py-2 focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                                        placeholder="From"
+                                    />
+                                    <span className="text-[10px] font-black text-slate-300">→</span>
+                                    <input
+                                        type="date"
+                                        min={dateLimits.min}
+                                        max={dateLimits.max}
+                                        value={filterDateTo}
+                                        onChange={(e) => setFilterDateTo(e.target.value)}
+                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 px-3 py-2 focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                                        placeholder="To"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Amount Range */}
+                            <div className="space-y-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount Range</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-slate-900">
+                                        <span className="text-[10px] text-slate-300 font-normal pl-3">Rp</span>
+                                        <input
+                                            type="text"
+                                            value={filterAmountMin ? formatNumberInput(filterAmountMin) : ''}
+                                            onChange={(e) => setFilterAmountMin(e.target.value.replace(/\D/g, ''))}
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-600 px-2 py-2"
+                                            placeholder="Min"
+                                        />
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-300">→</span>
+                                    <div className="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-slate-900">
+                                        <span className="text-[10px] text-slate-300 font-normal pl-3">Rp</span>
+                                        <input
+                                            type="text"
+                                            value={filterAmountMax ? formatNumberInput(filterAmountMax) : ''}
+                                            onChange={(e) => setFilterAmountMax(e.target.value.replace(/\D/g, ''))}
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-600 px-2 py-2"
+                                            placeholder="Max"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Payment Filter */}
+                        {masterPays.length > 0 && (
+                            <div className="space-y-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment Method</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {masterPays.map(p => (
+                                        <button
+                                            key={p.id}
+                                            onClick={() => handleFilterPayment(p.id)}
+                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                                filterPayments.includes(String(p.id))
+                                                    ? 'bg-slate-900 text-white shadow-lg scale-105'
+                                                    : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+                                            }`}
+                                        >
+                                            {p.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Category Filter (Outcomes) */}
+                        {filterTxType !== 'income' && masterCats.length > 0 && (
+                            <div className="space-y-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Category (Outcome)</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {masterCats.map(c => (
+                                        <button
+                                            key={c.id}
+                                            onClick={() => handleFilterCategory(c.id)}
+                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                                filterCategories.includes(String(c.id))
+                                                    ? 'bg-amber-600 text-white shadow-lg scale-105'
+                                                    : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+                                            }`}
+                                        >
+                                            {c.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Types: Income Type & Outcome Type */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Income Type */}
+                            {filterTxType !== 'outcome' && masterIncs.length > 0 && (
+                                <div className="space-y-2">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Income Type</span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {masterIncs.map(t => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => handleFilterIncomeType(t.id)}
+                                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                                    filterIncomeTypes.includes(String(t.id))
+                                                        ? 'bg-emerald-600 text-white shadow-lg scale-105'
+                                                        : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+                                                }`}
+                                            >
+                                                {t.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Outcome Type */}
+                            {filterTxType !== 'income' && masterTypes.length > 0 && (
+                                <div className="space-y-2">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Outcome Type</span>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {masterTypes.map(t => (
+                                            <button
+                                                key={t.id}
+                                                onClick={() => handleFilterOutcomeType(t.id)}
+                                                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                                    filterOutcomeTypes.includes(String(t.id))
+                                                        ? 'bg-rose-600 text-white shadow-lg scale-105'
+                                                        : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+                                                }`}
+                                            >
+                                                {t.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Clear All */}
+                        {hasActiveFilters && (
+                            <div className="flex justify-end pt-2 border-t border-slate-100">
+                                <button
+                                    onClick={clearAllFilters}
+                                    className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider text-rose-400 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition-all"
+                                >
+                                    Clear All Filters
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
             <div className="grid grid-cols-1 gap-12">
                 {/* --- INCOME SECTION --- */}
-                <section className="space-y-4">
-                    <div className="flex justify-between items-center px-2">
-                        <div className="flex items-baseline gap-4">
-                            <h3 className="font-black uppercase tracking-widest text-slate-400 text-sm">Incomes</h3>
-                            <p className="text-emerald-500 font-black text-2xl tracking-tighter">{formatIDR(totalInc)}</p>
+                {filterTxType !== 'outcome' && (
+                    <section className="space-y-4">
+                        <div className="flex justify-between items-center px-2">
+                            <div className="flex items-baseline gap-4">
+                                <h3 className="font-black uppercase tracking-widest text-slate-400 text-sm">Incomes</h3>
+                                <p className="text-emerald-500 font-black text-2xl tracking-tighter">
+                                    {formatIDR(hasActiveFilters ? filteredTotalInc : totalInc)}
+                                </p>
+                                {hasActiveFilters && (
+                                    <span className="text-[10px] font-bold text-slate-400">
+                                        ({filteredIncomes.length} of {incomes.length})
+                                    </span>
+                                )}
+                            </div>
+                            <button onClick={() => handleOpenModal('income')} className="px-5 py-2.5 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase hover:bg-emerald-600 shadow-lg transition-all active:scale-95">+ Add Income</button>
                         </div>
-                        <button onClick={() => handleOpenModal('income')} className="px-5 py-2.5 bg-emerald-500 text-white rounded-xl font-black text-[10px] uppercase hover:bg-emerald-600 shadow-lg transition-all active:scale-95">+ Add Income</button>
-                    </div>
-                    <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
-                        <table className="w-full text-left font-bold">
-                            <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                                <tr>
-                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('date')}>
-                                        Date {incSort.key === 'date' && (incSort.direction === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('title')}>
-                                        Info {incSort.key === 'title' && (incSort.direction === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th className="py-3 px-8 text-center cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('payment.name')}>
-                                        Payment {incSort.key === 'payment.name' && (incSort.direction === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th className="py-3 px-8 text-right cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('amount')}>
-                                        Total {incSort.key === 'amount' && (incSort.direction === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th className="py-3 px-8 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {sortedIncomes.map(inc => (
-                                    <tr key={inc.id} className="hover:bg-slate-50/50 transition-colors">
-                                        <td className="py-3 px-8 text-[11px] text-slate-400">{formatDateFull(inc.date)}</td>
-                                        <td className="py-3 px-8">
-                                            <p className="text-slate-700">{inc.title}</p>
-                                            <span className="text-[10px] font-black text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded">{inc.type?.name}</span>
-                                        </td>
-                                        <td className="py-3 px-8 text-center">
-                                            <span className="text-[10px] border border-slate-200 px-3 py-1 rounded-full uppercase text-slate-500">{inc.payment?.name || '-'}</span>
-                                        </td>
-                                        <td className="py-3 px-8 text-right text-emerald-600">{formatIDR(inc.amount)}</td>
-                                        <td className="py-3 px-8 text-right space-x-3">
-                                            <button onClick={() => handleOpenModal('income', inc)} className="text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase">Edit</button>
-                                            <button onClick={() => { setDeleteTarget({ type: 'income', id: inc.id }); setShowDeleteModal(true); }} className="text-rose-300 hover:text-rose-600 font-black text-[10px] uppercase">Del</button>
-                                        </td>
+                        <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+                            <table className="w-full text-left font-bold">
+                                <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                    <tr>
+                                        <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('date')}>
+                                            Date {incSort.key === 'date' && (incSort.direction === 'asc' ? '↑' : '↓')}
+                                        </th>
+                                        <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('title')}>
+                                            Info {incSort.key === 'title' && (incSort.direction === 'asc' ? '↑' : '↓')}
+                                        </th>
+                                        <th className="py-3 px-8 text-center cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('payment.name')}>
+                                            Payment {incSort.key === 'payment.name' && (incSort.direction === 'asc' ? '↑' : '↓')}
+                                        </th>
+                                        <th className="py-3 px-8 text-right cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortInc('amount')}>
+                                            Total {incSort.key === 'amount' && (incSort.direction === 'asc' ? '↑' : '↓')}
+                                        </th>
+                                        <th className="py-3 px-8 text-right">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {sortedIncomes.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" className="py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
+                                                No incomes found
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        sortedIncomes.map(inc => (
+                                            <tr key={inc.id} className="hover:bg-slate-50/50 transition-colors">
+                                                <td className="py-3 px-8 text-[11px] text-slate-400">{formatDateFull(inc.date)}</td>
+                                                <td className="py-3 px-8">
+                                                    <p className="text-slate-700">{inc.title}</p>
+                                                    <span className="text-[10px] font-black text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded">{inc.type?.name}</span>
+                                                </td>
+                                                <td className="py-3 px-8 text-center">
+                                                    <span className="text-[10px] border border-slate-200 px-3 py-1 rounded-full uppercase text-slate-500">{inc.payment?.name || '-'}</span>
+                                                </td>
+                                                <td className="py-3 px-8 text-right text-emerald-600">{formatIDR(inc.amount)}</td>
+                                                <td className="py-3 px-8 text-right space-x-3">
+                                                    <button onClick={() => handleOpenModal('income', inc)} className="text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase">Edit</button>
+                                                    <button onClick={() => { setDeleteTarget({ type: 'income', id: inc.id }); setShowDeleteModal(true); }} className="text-rose-300 hover:text-rose-600 font-black text-[10px] uppercase">Del</button>
+                                                </td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                )}
 
                 {/* --- OUTCOME SECTION --- */}
-                <section className="space-y-4">
-                    <div className="flex justify-between items-center px-2">
-                        <div className="flex items-baseline gap-4">
-                            <h3 className="font-black uppercase tracking-widest text-slate-400 text-sm">Outcomes</h3>
-                            <p className="text-rose-500 font-black text-2xl tracking-tighter">{formatIDR(totalOut)}</p>
+                {filterTxType !== 'income' && (
+                    <section className="space-y-4">
+                        <div className="flex justify-between items-center px-2">
+                            <div className="flex items-baseline gap-4">
+                                <h3 className="font-black uppercase tracking-widest text-slate-400 text-sm">Outcomes</h3>
+                                <p className="text-rose-500 font-black text-2xl tracking-tighter">
+                                    {formatIDR(hasActiveFilters ? filteredTotalOut : totalOut)}
+                                </p>
+                                {hasActiveFilters && (
+                                    <span className="text-[10px] font-bold text-slate-400">
+                                        ({filteredOutcomes.length} of {outcomes.length})
+                                    </span>
+                                )}
+                            </div>
+                            <button onClick={() => handleOpenModal('outcome')} className="px-5 py-2.5 bg-rose-500 text-white rounded-xl font-black text-[10px] uppercase hover:bg-rose-600 shadow-lg transition-all active:scale-95">+ Add Outcome</button>
                         </div>
-                        <button onClick={() => handleOpenModal('outcome')} className="px-5 py-2.5 bg-rose-500 text-white rounded-xl font-black text-[10px] uppercase hover:bg-rose-600 shadow-lg transition-all active:scale-95">+ Add Outcome</button>
-                    </div>
-                    <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
-                        <table className="w-full text-left font-bold">
-                            <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
-                                <tr>
-                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('date')}>
-                                        Date {outSort.key === 'date' && (outSort.direction === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('title')}>
-                                        Info {outSort.key === 'title' && (outSort.direction === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('category.name')}>
-                                        Category {outSort.key === 'category.name' && (outSort.direction === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th className="py-3 px-8 text-center cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('payment.name')}>
-                                        Payment {outSort.key === 'payment.name' && (outSort.direction === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th className="py-3 px-8 text-right cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('amount')}>
-                                        Total {outSort.key === 'amount' && (outSort.direction === 'asc' ? '↑' : '↓')}
-                                    </th>
-                                    <th className="py-3 px-8 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50">
-                                {sortedOutcomes.map(out => {
-                                    const counted = isOutcomeCounted(out);
-                                    return (
-                                    <tr key={out.id} className={`hover:bg-slate-50/50 transition-colors ${!counted ? 'opacity-60' : ''}`}>
-                                        <td className="py-3 px-8 text-[11px] text-slate-400">{formatDateFull(out.date)}</td>
-                                        <td className="py-3 px-8">
-                                            <p className="text-slate-700">{out.title}</p>
-                                            {out.type?.name && (
-                                                <span className="text-[10px] font-black text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded">
-                                                    {out.type.name}
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="py-3 px-8">
-                                            <div className="flex items-center gap-1.5">
-                                                <span className="text-[10px] font-black text-amber-600 uppercase tracking-wider">{out.category?.name}</span>
-                                                {!counted && (
-                                                    <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded" title="Kategori ini tidak dihitung ke total outcome">
-                                                        Not Counted
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="py-3 px-8 text-center">
-                                            <span className="text-[10px] border border-slate-200 px-3 py-1 rounded-full uppercase text-slate-500">{out.payment?.name || '-'}</span>
-                                        </td>
-                                        <td className="py-3 px-8 text-right text-rose-600">{formatIDR(out.amount)}</td>
-                                        <td className="py-3 px-8 text-right">
-                                            <div className="flex justify-end gap-3 items-center">
-                                                {out.has_detail && <button 
-                                                onClick={() => navigate(`/outcome-detail/${out.id}`, { 
-                                                    state: { outcomeTitle: out.title }
-                                                })}
-                                                className="bg-slate-900 text-white text-[9px] font-black px-3 py-1.5 rounded-lg">DETAIL</button>}
-                                                <button onClick={() => handleOpenModal('outcome', out)} className="text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase">Edit</button>
-                                                <button onClick={() => { setDeleteTarget({ type: 'outcome', id: out.id }); setShowDeleteModal(true); }} className="text-rose-300 hover:text-rose-600 font-black text-[10px] uppercase">Del</button>
-                                            </div>
-                                        </td>
+                        <div className="bg-white rounded-[2rem] shadow-sm border border-slate-100 overflow-hidden">
+                            <table className="w-full text-left font-bold">
+                                <thead className="bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-100">
+                                    <tr>
+                                        <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('date')}>
+                                            Date {outSort.key === 'date' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                        </th>
+                                        <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('title')}>
+                                            Info {outSort.key === 'title' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                        </th>
+                                        <th className="py-3 px-8 cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('category.name')}>
+                                            Category {outSort.key === 'category.name' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                        </th>
+                                        <th className="py-3 px-8 text-center cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('payment.name')}>
+                                            Payment {outSort.key === 'payment.name' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                        </th>
+                                        <th className="py-3 px-8 text-right cursor-pointer hover:text-slate-900 transition-colors" onClick={() => requestSortOut('amount')}>
+                                            Total {outSort.key === 'amount' && (outSort.direction === 'asc' ? '↑' : '↓')}
+                                        </th>
+                                        <th className="py-3 px-8 text-right">Actions</th>
                                     </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50">
+                                    {sortedOutcomes.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="6" className="py-8 text-center text-slate-400 text-xs font-bold uppercase tracking-widest">
+                                                No outcomes found
+                                            </td>
+                                        </tr>
+                                    ) : (
+                                        sortedOutcomes.map(out => {
+                                            const counted = isOutcomeCounted(out);
+                                            return (
+                                            <tr key={out.id} className={`hover:bg-slate-50/50 transition-colors ${!counted ? 'opacity-60' : ''}`}>
+                                                <td className="py-3 px-8 text-[11px] text-slate-400">{formatDateFull(out.date)}</td>
+                                                <td className="py-3 px-8">
+                                                    <p className="text-slate-700">{out.title}</p>
+                                                    {out.type?.name && (
+                                                        <span className="text-[10px] font-black text-slate-400 uppercase bg-slate-100 px-2 py-0.5 rounded">
+                                                            {out.type.name}
+                                                        </span>
+                                                    )}
+                                                </td>
+                                                <td className="py-3 px-8">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="text-[10px] font-black text-amber-600 uppercase tracking-wider">{out.category?.name}</span>
+                                                        {!counted && (
+                                                            <span className="text-[8px] font-black text-slate-400 uppercase tracking-wider bg-slate-100 px-1.5 py-0.5 rounded" title="Kategori ini tidak dihitung ke total outcome">
+                                                                Not Counted
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="py-3 px-8 text-center">
+                                                    <span className="text-[10px] border border-slate-200 px-3 py-1 rounded-full uppercase text-slate-500">{out.payment?.name || '-'}</span>
+                                                </td>
+                                                <td className="py-3 px-8 text-right text-rose-600">{formatIDR(out.amount)}</td>
+                                                <td className="py-3 px-8 text-right">
+                                                    <div className="flex justify-end gap-3 items-center">
+                                                        {out.has_detail && <button 
+                                                        onClick={() => navigate(`/outcome-detail/${out.id}`, { 
+                                                            state: { outcomeTitle: out.title }
+                                                        })}
+                                                        className="bg-slate-900 text-white text-[9px] font-black px-3 py-1.5 rounded-lg">DETAIL</button>}
+                                                        <button onClick={() => handleOpenModal('outcome', out)} className="text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase">Edit</button>
+                                                        <button onClick={() => { setDeleteTarget({ type: 'outcome', id: out.id }); setShowDeleteModal(true); }} className="text-rose-300 hover:text-rose-600 font-black text-[10px] uppercase">Del</button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            );
+                                        })
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                )}
             </div>
 
             {/* --- MODALS (Form & Delete) --- */}

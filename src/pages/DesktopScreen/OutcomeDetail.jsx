@@ -18,6 +18,13 @@ export default function OutcomeDetail() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'asc' });
+    const [filterTags, setFilterTags] = useState([]); // Tag IDs yang dipilih untuk filter
+    const [filterPayments, setFilterPayments] = useState([]); // Payment IDs yang dipilih untuk filter
+    const [filterDateFrom, setFilterDateFrom] = useState('');
+    const [filterDateTo, setFilterDateTo] = useState('');
+    const [filterAmountMin, setFilterAmountMin] = useState('');
+    const [filterAmountMax, setFilterAmountMax] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
     const outcomeTitle = location.state?.outcomeTitle || "";
 
     const fetchData = useCallback(async () => {
@@ -209,8 +216,42 @@ export default function OutcomeDetail() {
         }
     };
 
+    // Filter semua kriteria, baru sort
+    const hasActiveFilters = filterTags.length > 0 || filterPayments.length > 0 || filterDateFrom || filterDateTo || filterAmountMin || filterAmountMax;
+
+    const filteredDetails = useMemo(() => {
+        if (!hasActiveFilters) return details;
+        return details.filter(row => {
+            // Filter by Tags (OR — match salah satu aja cukup)
+            if (filterTags.length > 0) {
+                if (!filterTags.some(tagId => (row.tags || []).includes(tagId))) return false;
+            }
+
+            // Filter by Payment (OR — match salah satu)
+            if (filterPayments.length > 0) {
+                if (!filterPayments.includes(String(row.master_payment_id))) return false;
+            }
+
+            // Filter by Date Range
+            if (filterDateFrom || filterDateTo) {
+                const rowDate = row.date || '';
+                if (filterDateFrom && rowDate < filterDateFrom) return false;
+                if (filterDateTo && rowDate > filterDateTo) return false;
+            }
+
+            // Filter by Amount Range
+            if (filterAmountMin || filterAmountMax) {
+                const amount = Number(row.amount) || 0;
+                if (filterAmountMin && amount < Number(filterAmountMin)) return false;
+                if (filterAmountMax && amount > Number(filterAmountMax)) return false;
+            }
+
+            return true;
+        });
+    }, [details, filterTags, filterPayments, filterDateFrom, filterDateTo, filterAmountMin, filterAmountMax, hasActiveFilters]);
+
     const sortedDetails = useMemo(() => {
-        let sortableDetails = [...details];
+        let sortableDetails = [...filteredDetails];
         if (sortConfig.key !== null) {
             sortableDetails.sort((a, b) => {
                 let aValue, bValue;
@@ -227,9 +268,17 @@ export default function OutcomeDetail() {
                         bValue = Number(b.amount) || 0;
                         break;
                     case 'tags':
-                        // Sortir berdasarkan jumlah tag yang dipilih
-                        aValue = a.tags?.length || 0;
-                        bValue = b.tags?.length || 0;
+                        // Sortir berdasarkan nama tag (alphabetical) biar tag yang sama saling berdekatan
+                        aValue = (a.tags || [])
+                            .map(tagId => masterTags.find(t => String(t.id) === String(tagId))?.name || '')
+                            .sort()
+                            .join(', ')
+                            .toLowerCase();
+                        bValue = (b.tags || [])
+                            .map(tagId => masterTags.find(t => String(t.id) === String(tagId))?.name || '')
+                            .sort()
+                            .join(', ')
+                            .toLowerCase();
                         break;
                     default:
                         // Untuk date, title, dan note
@@ -243,13 +292,39 @@ export default function OutcomeDetail() {
             });
         }
         return sortableDetails;
-    }, [details, sortConfig, masterPayments]);
+    }, [filteredDetails, sortConfig, masterPayments, masterTags]);
 
     const requestSort = (key) => {
         setSortConfig(prev => ({
             key,
             direction: prev.key === key && prev.direction === 'asc' ? 'desc' : 'asc'
         }));
+    };
+
+    const handleFilterTag = (tagId) => {
+        setFilterTags(prev =>
+            prev.includes(tagId)
+                ? prev.filter(id => id !== tagId)
+                : [...prev, tagId]
+        );
+    };
+
+    const handleFilterPayment = (paymentId) => {
+        const pid = String(paymentId);
+        setFilterPayments(prev =>
+            prev.includes(pid)
+                ? prev.filter(id => id !== pid)
+                : [...prev, pid]
+        );
+    };
+
+    const clearAllFilters = () => {
+        setFilterTags([]);
+        setFilterPayments([]);
+        setFilterDateFrom('');
+        setFilterDateTo('');
+        setFilterAmountMin('');
+        setFilterAmountMax('');
     };
 
     const formatNumberInput = (val) => {
@@ -261,6 +336,7 @@ export default function OutcomeDetail() {
     };
 
     const totalAmount = useMemo(() => details.reduce((acc, curr) => acc + Number(curr.amount || 0), 0), [details]);
+    const filteredTotalAmount = useMemo(() => sortedDetails.reduce((acc, curr) => acc + Number(curr.amount || 0), 0), [sortedDetails]);
 
     if (loading) return <div className="flex items-center justify-center min-h-screen font-black text-slate-400 uppercase tracking-widest text-[10px]">Syncing...</div>;
 
@@ -280,6 +356,143 @@ export default function OutcomeDetail() {
                     </button>
                 </div>
             </header>
+
+            {/* Filter Bar */}
+            <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                {/* Toggle Header */}
+                <button
+                    onClick={() => setShowFilters(prev => !prev)}
+                    className="w-full flex items-center justify-between p-5 hover:bg-slate-50 transition-colors"
+                >
+                    <div className="flex items-center gap-3">
+                        <svg className={`w-4 h-4 text-slate-400 transition-transform ${showFilters ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2.5"><path d="M19 9l-7 7-7-7" /></svg>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Filters</span>
+                        {hasActiveFilters && (
+                            <span className="px-2 py-0.5 bg-slate-900 text-white text-[9px] font-black rounded-lg">
+                                ACTIVE
+                            </span>
+                        )}
+                    </div>
+                    {hasActiveFilters && (
+                        <span className="text-[10px] font-bold text-slate-300">
+                            Showing {sortedDetails.length} of {details.length} items
+                        </span>
+                    )}
+                </button>
+
+                {/* Filter Content */}
+                {showFilters && (
+                    <div className="px-5 pb-5 space-y-5 border-t border-slate-100">
+
+                        {/* Row 1: Date Range & Amount Range */}
+                        <div className="grid grid-cols-2 gap-6 pt-5">
+                            {/* Date Range */}
+                            <div className="space-y-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Date Range</span>
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="date"
+                                        value={filterDateFrom}
+                                        onChange={(e) => setFilterDateFrom(e.target.value)}
+                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 px-3 py-2 focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                                        placeholder="From"
+                                    />
+                                    <span className="text-[10px] font-black text-slate-300">→</span>
+                                    <input
+                                        type="date"
+                                        value={filterDateTo}
+                                        onChange={(e) => setFilterDateTo(e.target.value)}
+                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 px-3 py-2 focus:ring-2 focus:ring-slate-900 focus:border-transparent"
+                                        placeholder="To"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Amount Range */}
+                            <div className="space-y-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Amount Range</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-slate-900">
+                                        <span className="text-[10px] text-slate-300 font-normal pl-3">Rp</span>
+                                        <input
+                                            type="text"
+                                            value={filterAmountMin ? formatNumberInput(filterAmountMin) : ''}
+                                            onChange={(e) => setFilterAmountMin(e.target.value.replace(/\D/g, ''))}
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-600 px-2 py-2"
+                                            placeholder="Min"
+                                        />
+                                    </div>
+                                    <span className="text-[10px] font-black text-slate-300">→</span>
+                                    <div className="flex-1 flex items-center bg-slate-50 border border-slate-200 rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-slate-900">
+                                        <span className="text-[10px] text-slate-300 font-normal pl-3">Rp</span>
+                                        <input
+                                            type="text"
+                                            value={filterAmountMax ? formatNumberInput(filterAmountMax) : ''}
+                                            onChange={(e) => setFilterAmountMax(e.target.value.replace(/\D/g, ''))}
+                                            className="w-full bg-transparent border-none focus:ring-0 text-[11px] font-bold text-slate-600 px-2 py-2"
+                                            placeholder="Max"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Row 2: Payment Filter */}
+                        <div className="space-y-2">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Payment</span>
+                            <div className="flex flex-wrap gap-1.5">
+                                {masterPayments.map(p => (
+                                    <button
+                                        key={p.id}
+                                        onClick={() => handleFilterPayment(p.id)}
+                                        className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                            filterPayments.includes(String(p.id))
+                                                ? 'bg-slate-900 text-white shadow-lg scale-105'
+                                                : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+                                        }`}
+                                    >
+                                        {p.name}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Row 3: Tags Filter */}
+                        {masterTags.length > 0 && (
+                            <div className="space-y-2">
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tags</span>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {masterTags.map(tag => (
+                                        <button
+                                            key={tag.id}
+                                            onClick={() => handleFilterTag(tag.id)}
+                                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                                                filterTags.includes(tag.id)
+                                                    ? 'bg-slate-900 text-white shadow-lg scale-105'
+                                                    : 'bg-slate-50 text-slate-400 border border-slate-200 hover:bg-slate-100 hover:text-slate-600'
+                                            }`}
+                                        >
+                                            {tag.name}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Clear All */}
+                        {hasActiveFilters && (
+                            <div className="flex justify-end pt-2 border-t border-slate-100">
+                                <button
+                                    onClick={clearAllFilters}
+                                    className="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider text-rose-400 bg-rose-50 border border-rose-100 hover:bg-rose-100 transition-all"
+                                >
+                                    Clear All Filters
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
 
             <div className="bg-white rounded-[2.5rem] shadow-sm border border-slate-100 overflow-hidden">
                 <div className="overflow-x-auto">
@@ -391,15 +604,15 @@ export default function OutcomeDetail() {
 
             <footer className="flex justify-between items-center bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
                 <div className="flex gap-8 items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    <div>Lines: <span className="text-slate-900 text-lg ml-1">{details.length}</span></div>
+                    <div>Lines: <span className="text-slate-900 text-lg ml-1">{hasActiveFilters ? `${sortedDetails.length} / ${details.length}` : details.length}</span></div>
                     <div className="w-px h-6 bg-slate-100"></div>
                     <div>Changes: <span className="text-amber-500 text-lg ml-1">{details.filter(d => d.isNew).length + (originalDetails.length - details.filter(d => !d.isNew).length)}</span></div>
                 </div>
                 <div className="text-right">
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Table Amount</p>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">{hasActiveFilters ? 'Filtered Amount' : 'Total Table Amount'}</p>
                     <p className="text-4xl font-black text-slate-900 tracking-tighter">
                         <span className="text-slate-300 text-2xl mr-1 font-normal">Rp</span>
-                        {totalAmount.toLocaleString('id-ID')}
+                        {hasActiveFilters ? filteredTotalAmount.toLocaleString('id-ID') : totalAmount.toLocaleString('id-ID')}
                     </p>
                 </div>
             </footer>
